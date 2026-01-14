@@ -4,12 +4,20 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   getBezierPath,
+  type Edge,
   type EdgeProps,
 } from "@xyflow/react";
 
 import { cn } from "@/lib/utils";
 import { useExecutionStore } from "@/stores";
-import type { ConditionalEdgeData } from "@/types/edge";
+
+interface AnimatedEdgeData extends Record<string, unknown> {
+  conditionGroupId?: string;
+  label?: string;
+  isDefault?: boolean;
+}
+
+type AnimatedEdge = Edge<AnimatedEdgeData>;
 
 export function AnimatedEdge({
   id,
@@ -21,7 +29,7 @@ export function AnimatedEdge({
   targetPosition,
   data,
   markerEnd,
-}: EdgeProps<ConditionalEdgeData>) {
+}: EdgeProps<AnimatedEdge>) {
   const executedEdgeIds = useExecutionStore((state) => state.executedEdgeIds);
   const executionState = useExecutionStore((state) => state.executionState);
 

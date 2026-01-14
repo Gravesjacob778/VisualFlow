@@ -1,6 +1,6 @@
 "use client";
 
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import { GitBranch } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -8,11 +8,13 @@ import { cn } from "@/lib/utils";
 import { useIsNodeCompleted, useIsNodeExecuting } from "@/stores";
 import type { ConditionNodeData } from "@/types/node";
 
+type ConditionNode = Node<ConditionNodeData, "condition">;
+
 export function ConditionNode({
   id,
   data,
   selected,
-}: NodeProps<ConditionNodeData>) {
+}: NodeProps<ConditionNode>) {
   const isExecuting = useIsNodeExecuting(id);
   const isCompleted = useIsNodeCompleted(id);
 

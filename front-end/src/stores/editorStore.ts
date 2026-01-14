@@ -64,7 +64,7 @@ export const useEditorStore = create<EditorState>()(
         set((state) => ({
           nodes: state.nodes.map((node) =>
             node.id === nodeId
-              ? { ...node, data: { ...node.data, ...data } }
+              ? ({ ...node, data: { ...node.data, ...data } } as WorkflowNode)
               : node
           ),
           isDirty: true,
@@ -83,7 +83,7 @@ export const useEditorStore = create<EditorState>()(
 
       onNodesChange: (changes) =>
         set((state) => ({
-          nodes: applyNodeChanges(changes, state.nodes),
+          nodes: applyNodeChanges(changes, state.nodes) as WorkflowNode[],
           isDirty: true,
         })),
 
@@ -104,7 +104,7 @@ export const useEditorStore = create<EditorState>()(
 
       onEdgesChange: (changes) =>
         set((state) => ({
-          edges: applyEdgeChanges(changes, state.edges),
+          edges: applyEdgeChanges(changes, state.edges) as WorkflowEdge[],
           isDirty: true,
         })),
 
@@ -117,7 +117,7 @@ export const useEditorStore = create<EditorState>()(
               data: {},
             },
             state.edges
-          ),
+          ) as WorkflowEdge[],
           isDirty: true,
         })),
 

@@ -1,13 +1,15 @@
 "use client";
 
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import { Play } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useIsNodeCompleted, useIsNodeExecuting } from "@/stores";
 import type { StartNodeData } from "@/types/node";
 
-export function StartNode({ id, data, selected }: NodeProps<StartNodeData>) {
+type StartNode = Node<StartNodeData, "start">;
+
+export function StartNode({ id, data, selected }: NodeProps<StartNode>) {
   const isExecuting = useIsNodeExecuting(id);
   const isCompleted = useIsNodeCompleted(id);
 

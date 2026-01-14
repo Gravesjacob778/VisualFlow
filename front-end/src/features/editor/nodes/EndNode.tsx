@@ -1,13 +1,15 @@
 "use client";
 
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import { Square } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useIsNodeCompleted, useIsNodeExecuting } from "@/stores";
 import type { EndNodeData } from "@/types/node";
 
-export function EndNode({ id, data, selected }: NodeProps<EndNodeData>) {
+type EndNode = Node<EndNodeData, "end">;
+
+export function EndNode({ id, data, selected }: NodeProps<EndNode>) {
   const isExecuting = useIsNodeExecuting(id);
   const isCompleted = useIsNodeCompleted(id);
 

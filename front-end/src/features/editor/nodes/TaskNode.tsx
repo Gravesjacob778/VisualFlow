@@ -1,6 +1,6 @@
 "use client";
 
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import { Settings } from "lucide-react";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -8,7 +8,9 @@ import { cn } from "@/lib/utils";
 import { useIsNodeCompleted, useIsNodeExecuting } from "@/stores";
 import type { TaskNodeData } from "@/types/node";
 
-export function TaskNode({ id, data, selected }: NodeProps<TaskNodeData>) {
+type TaskNode = Node<TaskNodeData, "task">;
+
+export function TaskNode({ id, data, selected }: NodeProps<TaskNode>) {
   const isExecuting = useIsNodeExecuting(id);
   const isCompleted = useIsNodeCompleted(id);
 
