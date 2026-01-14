@@ -1,0 +1,16 @@
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+
+namespace VisualFlow.WebApi.Controllers;
+
+/// <summary>
+/// Base controller with common dependencies.
+/// </summary>
+[ApiController]
+[Route("api/[controller]")]
+public abstract class BaseApiController : ControllerBase
+{
+    private ISender? _mediator;
+
+    protected ISender Mediator => _mediator ??= HttpContext.RequestServices.GetRequiredService<ISender>();
+}

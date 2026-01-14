@@ -1,0 +1,6 @@
+@VisualFlow.WebApi_HostAddress = http://localhost:5253
+
+GET {{VisualFlow.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

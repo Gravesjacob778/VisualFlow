@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/VisualFlow.Application/VisualFlow.Application.csproj" />
+    <Project Path="src/VisualFlow.Domain/VisualFlow.Domain.csproj" />
+    <Project Path="src/VisualFlow.Infrastructure/VisualFlow.Infrastructure.csproj" />
+    <Project Path="src/VisualFlow.WebApi/VisualFlow.WebApi.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/VisualFlow.Application.IntegrationTests/VisualFlow.Application.IntegrationTests.csproj" />
+    <Project Path="tests/VisualFlow.Application.UnitTests/VisualFlow.Application.UnitTests.csproj" />
+    <Project Path="tests/VisualFlow.Domain.UnitTests/VisualFlow.Domain.UnitTests.csproj" />
+  </Folder>
+</Solution>
