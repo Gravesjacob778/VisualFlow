@@ -80,7 +80,7 @@ export function NodePalette({ className }: NodePaletteProps) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">{item.label}</p>
-                  <p className="truncate text-xs text-muted-foreground">
+                  <p className="text-xs leading-tight text-muted-foreground">
                     {item.description}
                   </p>
                 </div>
