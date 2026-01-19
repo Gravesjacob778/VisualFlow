@@ -18,7 +18,7 @@ export function RobotArmScene() {
                 dpr={[1, 2]}
                 gl={{ antialias: true }}
             >
-                <PerspectiveCamera makeDefault position={[2.8, 2.2, 3.6]} fov={42} />
+                <PerspectiveCamera makeDefault position={[2.2, 1.8, 2.8]} fov={55} />
                 <color attach="background" args={["#0b0f14"]} />
                 <fog attach="fog" args={["#0b0f14", 8, 18]} />
 
@@ -65,7 +65,7 @@ export function RobotArmScene() {
                 <OrbitControls
                     enablePan
                     enableDamping
-                    minDistance={2.2}
+                    minDistance={1.5}
                     maxDistance={7.5}
                     maxPolarAngle={Math.PI * 0.5}
                 />
