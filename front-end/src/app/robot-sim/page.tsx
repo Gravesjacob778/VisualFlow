@@ -1,4 +1,6 @@
 import { RobotArmScene } from "@/features/robot-sim/components/RobotArmScene";
+import { ComponentDrawer } from "@/features/robot-sim/components/ComponentDrawer";
+import { ControlDrawer } from "@/features/robot-sim/components/ControlDrawer";
 
 export default function RobotSimPage() {
     return (
@@ -9,7 +11,9 @@ export default function RobotSimPage() {
                     High-fidelity industrial manipulator preview
                 </p>
             </header>
-            <section className="flex-1 overflow-hidden">
+            <section className="relative flex-1 overflow-hidden">
+                <ComponentDrawer />
+                <ControlDrawer />
                 <RobotArmScene />
             </section>
         </main>
