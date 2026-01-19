@@ -9,12 +9,20 @@ export default function HomePage() {
           Visual workflow automation editor
         </p>
       </div>
-      <Link
-        href="/editor/new"
-        className="rounded-lg bg-primary px-6 py-3 text-primary-foreground transition-colors hover:bg-primary/90"
-      >
-        Create New Workflow
-      </Link>
+      <div className="flex flex-col items-center gap-3 sm:flex-row">
+        <Link
+          href="/editor/new"
+          className="rounded-lg bg-primary px-6 py-3 text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          Create New Workflow
+        </Link>
+        <Link
+          href="/robot-sim"
+          className="rounded-lg border border-border px-6 py-3 text-foreground transition-colors hover:bg-muted"
+        >
+          Open Robot Simulation
+        </Link>
+      </div>
     </main>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { Pause, Play, RotateCcw, Save } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -151,6 +152,9 @@ export function EditorToolbar({
 
         {/* Right: Save */}
         <div className="flex items-center gap-2">
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/robot-sim">Return to Simulation</Link>
+          </Button>
           <Button
             variant="outline"
             size="sm"
