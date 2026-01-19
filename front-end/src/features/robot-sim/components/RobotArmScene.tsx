@@ -9,6 +9,7 @@ import {
     PerspectiveCamera,
 } from "@react-three/drei";
 import { RobotArm } from "@/features/robot-sim/components/RobotArm";
+import { Box } from "@/features/robot-sim/components/Box";
 
 export function RobotArmScene() {
     return (
@@ -44,6 +45,7 @@ export function RobotArmScene() {
                 </Suspense>
 
                 <RobotArm position={[0, 0, 0]} />
+                <Box position={[0.8, 0.15, 0]} size={[0.3, 0.3, 0.3]} />
 
                 <mesh
                     receiveShadow
