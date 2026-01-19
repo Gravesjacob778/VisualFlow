@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame, type ThreeElements } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
+import { useRobotArmStore } from "@/stores/robotArmStore";
 
 interface JointConstraints {
   axis: "x" | "y" | "z";
@@ -105,6 +106,13 @@ export function RobotArm(props: ThreeElements["group"]) {
   const joint4Ref = useRef<THREE.Group>(null);
   const joint5Ref = useRef<THREE.Group>(null);
   const joint6Ref = useRef<THREE.Group>(null);
+  const gripperLeftRef = useRef<THREE.Group>(null);
+  const gripperRightRef = useRef<THREE.Group>(null);
+
+  // Get state from store
+  const jointAngles = useRobotArmStore((state) => state.jointAngles);
+  const gripperValue = useRobotArmStore((state) => state.gripperValue);
+  const isManualMode = useRobotArmStore((state) => state.isManualMode);
 
   const materials = useMemo(() => {
     return {
@@ -584,43 +592,101 @@ export function RobotArm(props: ThreeElements["group"]) {
   );
 
   useFrame((state, delta) => {
-    const t = state.clock.getElapsedTime();
-    applyJointRotation(
-      joint1Ref.current,
-      Math.sin(t * 0.3) * 0.9,
-      constraints.joint1,
-      delta
-    );
-    applyJointRotation(
-      joint2Ref.current,
-      Math.sin(t * 0.5) * 0.6,
-      constraints.joint2,
-      delta
-    );
-    applyJointRotation(
-      joint3Ref.current,
-      Math.sin(t * 0.65) * 0.8,
-      constraints.joint3,
-      delta
-    );
-    applyJointRotation(
-      joint4Ref.current,
-      Math.sin(t * 1.2) * 1.1,
-      constraints.joint4,
-      delta
-    );
-    applyJointRotation(
-      joint5Ref.current,
-      Math.sin(t * 0.9) * 0.7,
-      constraints.joint5,
-      delta
-    );
-    applyJointRotation(
-      joint6Ref.current,
-      Math.sin(t * 1.4) * 1.2,
-      constraints.joint6,
-      delta
-    );
+    if (isManualMode) {
+      // Manual mode: use joint angles from store
+      applyJointRotation(
+        joint1Ref.current,
+        jointAngles.j1,
+        constraints.joint1,
+        delta
+      );
+      applyJointRotation(
+        joint2Ref.current,
+        jointAngles.j2,
+        constraints.joint2,
+        delta
+      );
+      applyJointRotation(
+        joint3Ref.current,
+        jointAngles.j3,
+        constraints.joint3,
+        delta
+      );
+      applyJointRotation(
+        joint4Ref.current,
+        jointAngles.j4,
+        constraints.joint4,
+        delta
+      );
+      applyJointRotation(
+        joint5Ref.current,
+        jointAngles.j5,
+        constraints.joint5,
+        delta
+      );
+      applyJointRotation(
+        joint6Ref.current,
+        jointAngles.j6,
+        constraints.joint6,
+        delta
+      );
+    } else {
+      // Auto mode: sine wave animation
+      const t = state.clock.getElapsedTime();
+      applyJointRotation(
+        joint1Ref.current,
+        Math.sin(t * 0.3) * 0.9,
+        constraints.joint1,
+        delta
+      );
+      applyJointRotation(
+        joint2Ref.current,
+        Math.sin(t * 0.5) * 0.6,
+        constraints.joint2,
+        delta
+      );
+      applyJointRotation(
+        joint3Ref.current,
+        Math.sin(t * 0.65) * 0.8,
+        constraints.joint3,
+        delta
+      );
+      applyJointRotation(
+        joint4Ref.current,
+        Math.sin(t * 1.2) * 1.1,
+        constraints.joint4,
+        delta
+      );
+      applyJointRotation(
+        joint5Ref.current,
+        Math.sin(t * 0.9) * 0.7,
+        constraints.joint5,
+        delta
+      );
+      applyJointRotation(
+        joint6Ref.current,
+        Math.sin(t * 1.4) * 1.2,
+        constraints.joint6,
+        delta
+      );
+    }
+
+    // Gripper animation (works in both modes)
+    const gripperOffset = (gripperValue / 100) * 0.04; // Max 0.04 units outward
+    if (gripperLeftRef.current) {
+      gripperLeftRef.current.position.x = THREE.MathUtils.lerp(
+        gripperLeftRef.current.position.x,
+        -0.06 - gripperOffset,
+        delta * 8
+      );
+    }
+    if (gripperRightRef.current) {
+      gripperRightRef.current.position.x = THREE.MathUtils.lerp(
+        gripperRightRef.current.position.x,
+        0.06 + gripperOffset,
+        delta * 8
+      );
+    }
   });
 
   return (
@@ -851,38 +917,44 @@ export function RobotArm(props: ThreeElements["group"]) {
                       material={materials.darkMetal}
                       castShadow
                     />
-                    <RoundedBox
-                      args={[0.05, 0.14, 0.05]}
-                      radius={0.01}
-                      smoothness={6}
-                      position={[-0.06, 0.09, 0.05]}
-                      material={materials.metal}
-                      castShadow
-                    />
-                    <RoundedBox
-                      args={[0.05, 0.14, 0.05]}
-                      radius={0.01}
-                      smoothness={6}
-                      position={[0.06, 0.09, 0.05]}
-                      material={materials.metal}
-                      castShadow
-                    />
-                    <RoundedBox
-                      args={[0.03, 0.1, 0.06]}
-                      radius={0.008}
-                      smoothness={4}
-                      position={[-0.06, 0.2, 0.06]}
-                      material={materials.rubber}
-                      castShadow
-                    />
-                    <RoundedBox
-                      args={[0.03, 0.1, 0.06]}
-                      radius={0.008}
-                      smoothness={4}
-                      position={[0.06, 0.2, 0.06]}
-                      material={materials.rubber}
-                      castShadow
-                    />
+                    {/* Left Gripper Finger */}
+                    <group ref={gripperLeftRef} position={[-0.06, 0, 0]}>
+                      <RoundedBox
+                        args={[0.05, 0.14, 0.05]}
+                        radius={0.01}
+                        smoothness={6}
+                        position={[0, 0.09, 0.05]}
+                        material={materials.metal}
+                        castShadow
+                      />
+                      <RoundedBox
+                        args={[0.03, 0.1, 0.06]}
+                        radius={0.008}
+                        smoothness={4}
+                        position={[0, 0.2, 0.06]}
+                        material={materials.rubber}
+                        castShadow
+                      />
+                    </group>
+                    {/* Right Gripper Finger */}
+                    <group ref={gripperRightRef} position={[0.06, 0, 0]}>
+                      <RoundedBox
+                        args={[0.05, 0.14, 0.05]}
+                        radius={0.01}
+                        smoothness={6}
+                        position={[0, 0.09, 0.05]}
+                        material={materials.metal}
+                        castShadow
+                      />
+                      <RoundedBox
+                        args={[0.03, 0.1, 0.06]}
+                        radius={0.008}
+                        smoothness={4}
+                        position={[0, 0.2, 0.06]}
+                        material={materials.rubber}
+                        castShadow
+                      />
+                    </group>
                     <mesh
                       geometry={sensorGeometry}
                       material={materials.glass}
