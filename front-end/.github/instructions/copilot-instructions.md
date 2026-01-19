@@ -143,3 +143,6 @@ Four workflow node types: `start`, `task`, `condition`, `end`
 - No CI/CD workflows configured (only Copilot coding agent workflow)
 - The project uses React Flow v12 with custom node and edge components
 - shadcn/ui components can be added using `npx shadcn@latest add [component]`
+
+## comment
+- all about the comment use english language
