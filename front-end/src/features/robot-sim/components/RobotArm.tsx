@@ -160,64 +160,274 @@ export function RobotArm(props: ThreeElements["group"]) {
     []
   );
 
-  // === 圓筒關節殼體幾何體（包覆減速機與交叉滾子軸承）===
-  // J1 關節（底座旋轉關節）- 大型圓筒，略鼓起
-  const j1HousingGeometry = useMemo(
-    () => new THREE.CylinderGeometry(0.22, 0.24, 0.2, 64),
-    []
-  );
-  const j1BulgeGeometry = useMemo(
-    () => new THREE.TorusGeometry(0.245, 0.028, 20, 64),
+  // === Industrial-Grade Joint Housing Geometries ===
+  // These profiles create robust cylindrical casings that resemble real harmonic drive/RV reducer housings
+  // with generous fillets, smooth surface blending, and gradual transitions for stress distribution
+
+  // J1 Joint (Base Rotation) - Large industrial housing with mounting flange and smooth fillets
+  const j1HousingGeometry = useMemo(() => {
+    const points: THREE.Vector2[] = [];
+    // Bottom mounting flange with fillet
+    points.push(new THREE.Vector2(0.0, 0));
+    points.push(new THREE.Vector2(0.28, 0));
+    points.push(new THREE.Vector2(0.28, 0.015));
+    // Fillet transition to main body
+    for (let i = 0; i <= 8; i++) {
+      const angle = (i / 8) * (Math.PI / 2);
+      points.push(
+        new THREE.Vector2(
+          0.28 - 0.03 * (1 - Math.cos(angle)),
+          0.015 + 0.03 * Math.sin(angle)
+        )
+      );
+    }
+    // Main cylindrical body with slight barrel profile
+    points.push(new THREE.Vector2(0.26, 0.06));
+    points.push(new THREE.Vector2(0.265, 0.1));
+    points.push(new THREE.Vector2(0.27, 0.14)); // Peak of barrel
+    points.push(new THREE.Vector2(0.265, 0.18));
+    points.push(new THREE.Vector2(0.26, 0.22));
+    // Top fillet transition
+    for (let i = 0; i <= 8; i++) {
+      const angle = (i / 8) * (Math.PI / 2);
+      points.push(
+        new THREE.Vector2(
+          0.26 - 0.04 * Math.sin(angle),
+          0.22 + 0.03 * (1 - Math.cos(angle))
+        )
+      );
+    }
+    points.push(new THREE.Vector2(0.22, 0.25));
+    points.push(new THREE.Vector2(0.0, 0.25));
+    return new THREE.LatheGeometry(points, 64);
+  }, []);
+
+  // J1 Reducer cap ring
+  const j1CapGeometry = useMemo(
+    () => new THREE.CylinderGeometry(0.23, 0.25, 0.02, 64),
     []
   );
 
-  // J2 關節（肩部俯仰關節）- 中大型圓筒，橫向安裝
-  const j2HousingGeometry = useMemo(
-    () => new THREE.CylinderGeometry(0.18, 0.2, 0.16, 64),
-    []
-  );
-  const j2BulgeGeometry = useMemo(
-    () => new THREE.TorusGeometry(0.2, 0.024, 18, 64),
+  // J2 Joint (Shoulder Pitch) - Robust horizontal housing with dual-flange design
+  const j2HousingGeometry = useMemo(() => {
+    const points: THREE.Vector2[] = [];
+    // Left end flange
+    points.push(new THREE.Vector2(0.0, 0));
+    points.push(new THREE.Vector2(0.24, 0));
+    points.push(new THREE.Vector2(0.24, 0.012));
+    // Fillet to main body
+    for (let i = 0; i <= 6; i++) {
+      const angle = (i / 6) * (Math.PI / 2);
+      points.push(
+        new THREE.Vector2(
+          0.24 - 0.025 * (1 - Math.cos(angle)),
+          0.012 + 0.025 * Math.sin(angle)
+        )
+      );
+    }
+    // Barrel body section
+    points.push(new THREE.Vector2(0.22, 0.05));
+    points.push(new THREE.Vector2(0.225, 0.08));
+    points.push(new THREE.Vector2(0.23, 0.1)); // Max diameter
+    points.push(new THREE.Vector2(0.225, 0.12));
+    points.push(new THREE.Vector2(0.22, 0.15));
+    // Fillet to right flange
+    for (let i = 0; i <= 6; i++) {
+      const angle = (i / 6) * (Math.PI / 2);
+      points.push(
+        new THREE.Vector2(
+          0.22 + 0.02 * (1 - Math.cos(angle)),
+          0.15 + 0.025 * Math.sin(angle)
+        )
+      );
+    }
+    points.push(new THREE.Vector2(0.24, 0.188));
+    points.push(new THREE.Vector2(0.24, 0.2));
+    points.push(new THREE.Vector2(0.0, 0.2));
+    return new THREE.LatheGeometry(points, 64);
+  }, []);
+
+  // J2 center accent ring
+  const j2RingGeometry = useMemo(
+    () => new THREE.TorusGeometry(0.235, 0.012, 16, 64),
     []
   );
 
-  // J3 關節（肘部關節）- 中型圓筒
-  const j3HousingGeometry = useMemo(
-    () => new THREE.CylinderGeometry(0.16, 0.18, 0.14, 64),
-    []
-  );
-  const j3BulgeGeometry = useMemo(
-    () => new THREE.TorusGeometry(0.18, 0.022, 18, 64),
+  // J3 Joint (Elbow) - Medium housing with integrated transition zones
+  const j3HousingGeometry = useMemo(() => {
+    const points: THREE.Vector2[] = [];
+    // Input side flange
+    points.push(new THREE.Vector2(0.0, 0));
+    points.push(new THREE.Vector2(0.21, 0));
+    points.push(new THREE.Vector2(0.21, 0.01));
+    // Smooth fillet
+    for (let i = 0; i <= 6; i++) {
+      const angle = (i / 6) * (Math.PI / 2);
+      points.push(
+        new THREE.Vector2(
+          0.21 - 0.02 * (1 - Math.cos(angle)),
+          0.01 + 0.02 * Math.sin(angle)
+        )
+      );
+    }
+    // Barrel profile
+    points.push(new THREE.Vector2(0.195, 0.04));
+    points.push(new THREE.Vector2(0.2, 0.07));
+    points.push(new THREE.Vector2(0.205, 0.09)); // Peak
+    points.push(new THREE.Vector2(0.2, 0.11));
+    points.push(new THREE.Vector2(0.195, 0.14));
+    // Output fillet
+    for (let i = 0; i <= 6; i++) {
+      const angle = (i / 6) * (Math.PI / 2);
+      points.push(
+        new THREE.Vector2(
+          0.195 + 0.015 * (1 - Math.cos(angle)),
+          0.14 + 0.02 * Math.sin(angle)
+        )
+      );
+    }
+    points.push(new THREE.Vector2(0.21, 0.17));
+    points.push(new THREE.Vector2(0.21, 0.18));
+    points.push(new THREE.Vector2(0.0, 0.18));
+    return new THREE.LatheGeometry(points, 64);
+  }, []);
+
+  // J3 accent rings
+  const j3RingGeometry = useMemo(
+    () => new THREE.TorusGeometry(0.21, 0.01, 16, 64),
     []
   );
 
-  // J4 關節（腕部旋轉關節）- 較小圓筒
-  const j4HousingGeometry = useMemo(
-    () => new THREE.CylinderGeometry(0.11, 0.13, 0.1, 48),
-    []
-  );
-  const j4BulgeGeometry = useMemo(
-    () => new THREE.TorusGeometry(0.13, 0.018, 16, 48),
+  // J4 Joint (Wrist Roll) - Compact axial housing
+  const j4HousingGeometry = useMemo(() => {
+    const points: THREE.Vector2[] = [];
+    // Bottom flange
+    points.push(new THREE.Vector2(0.0, 0));
+    points.push(new THREE.Vector2(0.16, 0));
+    points.push(new THREE.Vector2(0.16, 0.008));
+    // Fillet
+    for (let i = 0; i <= 5; i++) {
+      const angle = (i / 5) * (Math.PI / 2);
+      points.push(
+        new THREE.Vector2(
+          0.16 - 0.015 * (1 - Math.cos(angle)),
+          0.008 + 0.015 * Math.sin(angle)
+        )
+      );
+    }
+    // Barrel body
+    points.push(new THREE.Vector2(0.15, 0.03));
+    points.push(new THREE.Vector2(0.155, 0.055));
+    points.push(new THREE.Vector2(0.16, 0.07)); // Peak
+    points.push(new THREE.Vector2(0.155, 0.085));
+    points.push(new THREE.Vector2(0.15, 0.11));
+    // Top fillet
+    for (let i = 0; i <= 5; i++) {
+      const angle = (i / 5) * (Math.PI / 2);
+      points.push(
+        new THREE.Vector2(
+          0.15 - 0.02 * Math.sin(angle),
+          0.11 + 0.015 * (1 - Math.cos(angle))
+        )
+      );
+    }
+    points.push(new THREE.Vector2(0.13, 0.125));
+    points.push(new THREE.Vector2(0.0, 0.125));
+    return new THREE.LatheGeometry(points, 48);
+  }, []);
+
+  // J4 accent ring
+  const j4RingGeometry = useMemo(
+    () => new THREE.TorusGeometry(0.16, 0.008, 16, 48),
     []
   );
 
-  // J5 關節（腕部俯仰關節）- 小型圓筒
-  const j5HousingGeometry = useMemo(
-    () => new THREE.CylinderGeometry(0.09, 0.11, 0.08, 48),
-    []
-  );
-  const j5BulgeGeometry = useMemo(
-    () => new THREE.TorusGeometry(0.11, 0.015, 16, 48),
+  // J5 Joint (Wrist Pitch) - Small precision housing
+  const j5HousingGeometry = useMemo(() => {
+    const points: THREE.Vector2[] = [];
+    // Left flange
+    points.push(new THREE.Vector2(0.0, 0));
+    points.push(new THREE.Vector2(0.14, 0));
+    points.push(new THREE.Vector2(0.14, 0.006));
+    // Fillet
+    for (let i = 0; i <= 4; i++) {
+      const angle = (i / 4) * (Math.PI / 2);
+      points.push(
+        new THREE.Vector2(
+          0.14 - 0.012 * (1 - Math.cos(angle)),
+          0.006 + 0.012 * Math.sin(angle)
+        )
+      );
+    }
+    // Body
+    points.push(new THREE.Vector2(0.13, 0.025));
+    points.push(new THREE.Vector2(0.135, 0.045));
+    points.push(new THREE.Vector2(0.14, 0.055)); // Peak
+    points.push(new THREE.Vector2(0.135, 0.065));
+    points.push(new THREE.Vector2(0.13, 0.085));
+    // Right fillet
+    for (let i = 0; i <= 4; i++) {
+      const angle = (i / 4) * (Math.PI / 2);
+      points.push(
+        new THREE.Vector2(
+          0.13 + 0.01 * (1 - Math.cos(angle)),
+          0.085 + 0.012 * Math.sin(angle)
+        )
+      );
+    }
+    points.push(new THREE.Vector2(0.14, 0.104));
+    points.push(new THREE.Vector2(0.14, 0.11));
+    points.push(new THREE.Vector2(0.0, 0.11));
+    return new THREE.LatheGeometry(points, 48);
+  }, []);
+
+  // J5 accent ring
+  const j5RingGeometry = useMemo(
+    () => new THREE.TorusGeometry(0.14, 0.006, 16, 48),
     []
   );
 
-  // J6 關節（末端旋轉關節）- 最小圓筒
-  const j6HousingGeometry = useMemo(
-    () => new THREE.CylinderGeometry(0.07, 0.08, 0.06, 48),
-    []
-  );
-  const j6BulgeGeometry = useMemo(
-    () => new THREE.TorusGeometry(0.085, 0.012, 16, 48),
+  // J6 Joint (Tool Roll) - Compact end effector housing
+  const j6HousingGeometry = useMemo(() => {
+    const points: THREE.Vector2[] = [];
+    // Bottom flange
+    points.push(new THREE.Vector2(0.0, 0));
+    points.push(new THREE.Vector2(0.11, 0));
+    points.push(new THREE.Vector2(0.11, 0.005));
+    // Fillet
+    for (let i = 0; i <= 4; i++) {
+      const angle = (i / 4) * (Math.PI / 2);
+      points.push(
+        new THREE.Vector2(
+          0.11 - 0.01 * (1 - Math.cos(angle)),
+          0.005 + 0.01 * Math.sin(angle)
+        )
+      );
+    }
+    // Body with slight barrel
+    points.push(new THREE.Vector2(0.1, 0.02));
+    points.push(new THREE.Vector2(0.105, 0.035));
+    points.push(new THREE.Vector2(0.11, 0.045)); // Peak
+    points.push(new THREE.Vector2(0.105, 0.055));
+    points.push(new THREE.Vector2(0.1, 0.07));
+    // Top fillet
+    for (let i = 0; i <= 4; i++) {
+      const angle = (i / 4) * (Math.PI / 2);
+      points.push(
+        new THREE.Vector2(
+          0.1 - 0.015 * Math.sin(angle),
+          0.07 + 0.01 * (1 - Math.cos(angle))
+        )
+      );
+    }
+    points.push(new THREE.Vector2(0.085, 0.08));
+    points.push(new THREE.Vector2(0.0, 0.08));
+    return new THREE.LatheGeometry(points, 48);
+  }, []);
+
+  // J6 accent ring
+  const j6RingGeometry = useMemo(
+    () => new THREE.TorusGeometry(0.11, 0.005, 16, 48),
     []
   );
 
@@ -280,17 +490,17 @@ export function RobotArm(props: ThreeElements["group"]) {
       baseGeometry.dispose();
       baseRimGeometry.dispose();
       j1HousingGeometry.dispose();
-      j1BulgeGeometry.dispose();
+      j1CapGeometry.dispose();
       j2HousingGeometry.dispose();
-      j2BulgeGeometry.dispose();
+      j2RingGeometry.dispose();
       j3HousingGeometry.dispose();
-      j3BulgeGeometry.dispose();
+      j3RingGeometry.dispose();
       j4HousingGeometry.dispose();
-      j4BulgeGeometry.dispose();
+      j4RingGeometry.dispose();
       j5HousingGeometry.dispose();
-      j5BulgeGeometry.dispose();
+      j5RingGeometry.dispose();
       j6HousingGeometry.dispose();
-      j6BulgeGeometry.dispose();
+      j6RingGeometry.dispose();
       link1Geometry.dispose();
       link2Geometry.dispose();
       link3Geometry.dispose();
@@ -302,17 +512,17 @@ export function RobotArm(props: ThreeElements["group"]) {
     baseGeometry,
     baseRimGeometry,
     j1HousingGeometry,
-    j1BulgeGeometry,
+    j1CapGeometry,
     j2HousingGeometry,
-    j2BulgeGeometry,
+    j2RingGeometry,
     j3HousingGeometry,
-    j3BulgeGeometry,
+    j3RingGeometry,
     j4HousingGeometry,
-    j4BulgeGeometry,
+    j4RingGeometry,
     j5HousingGeometry,
-    j5BulgeGeometry,
+    j5RingGeometry,
     j6HousingGeometry,
-    j6BulgeGeometry,
+    j6RingGeometry,
     link1Geometry,
     link2Geometry,
     link3Geometry,
@@ -445,62 +655,44 @@ export function RobotArm(props: ThreeElements["group"]) {
         castShadow
       />
 
-      {/* J1 關節組件 - 底座旋轉關節（同軸圓筒設計）*/}
+      {/* J1 Joint - Industrial Base Rotation Joint */}
       <group ref={joint1Ref} position={[0, 0.14, 0]}>
-        {/* J1 圓筒殼體 - 包覆減速機與交叉滾子軸承 */}
+        {/* J1 Industrial Housing - Integrated barrel profile with fillets */}
         <mesh
           geometry={j1HousingGeometry}
           material={materials.paint}
-          position={[0, 0.1, 0]}
           castShadow
           receiveShadow
         />
-        {/* J1 鼓起環 - 下方邊緣 */}
+        {/* J1 Reducer Cap Ring - Dark accent at center */}
         <mesh
-          geometry={j1BulgeGeometry}
-          material={materials.paint}
-          position={[0, 0.02, 0]}
-          rotation={[Math.PI / 2, 0, 0]}
-          castShadow
-        />
-        {/* J1 鼓起環 - 中央最粗處（減速機位置）*/}
-        <mesh
-          geometry={j1BulgeGeometry}
+          geometry={j1CapGeometry}
           material={materials.darkMetal}
-          position={[0, 0.1, 0]}
-          rotation={[Math.PI / 2, 0, 0]}
+          position={[0, 0.125, 0]}
           castShadow
         />
-        {/* J1 鼓起環 - 上方邊緣 */}
-        <mesh
-          geometry={j1BulgeGeometry}
-          material={materials.paint}
-          position={[0, 0.18, 0]}
-          rotation={[Math.PI / 2, 0, 0]}
-          castShadow
-        />
-        {/* J1 螺絲環 */}
+        {/* J1 Mounting Screws */}
         <ScrewRing
-          radius={0.2}
+          radius={0.24}
           count={12}
           height={0.02}
-          offsetY={0.18}
+          offsetY={0.24}
           geometry={screwGeometry}
           material={materials.darkMetal}
         />
 
-        {/* Link1 連桿 - 大圓角過渡至 J2 */}
+        {/* Link1 - Transition to J2 */}
         <mesh
           geometry={link1Geometry}
           material={materials.paint}
-          position={[0, 0.2, 0]}
+          position={[0, 0.25, 0]}
           castShadow
           receiveShadow
         />
 
-        {/* J2 關節組件 - 肩部俯仰關節（橫向同軸圓筒）*/}
-        <group ref={joint2Ref} position={[0, 0.6, 0]}>
-          {/* J2 圓筒殼體 - 橫向安裝 */}
+        {/* J2 Joint - Industrial Shoulder Pitch Joint (Horizontal) */}
+        <group ref={joint2Ref} position={[0, 0.65, 0]}>
+          {/* J2 Industrial Housing - Horizontal orientation */}
           <mesh
             geometry={j2HousingGeometry}
             material={materials.metal}
@@ -508,32 +700,16 @@ export function RobotArm(props: ThreeElements["group"]) {
             castShadow
             receiveShadow
           />
-          {/* J2 鼓起環 - 左側邊緣 */}
+          {/* J2 Center Accent Ring */}
           <mesh
-            geometry={j2BulgeGeometry}
-            material={materials.darkMetal}
-            position={[-0.08, 0, 0]}
-            rotation={[0, 0, Math.PI / 2]}
-            castShadow
-          />
-          {/* J2 鼓起環 - 中央（減速機位置）*/}
-          <mesh
-            geometry={j2BulgeGeometry}
+            geometry={j2RingGeometry}
             material={materials.paint}
             rotation={[0, 0, Math.PI / 2]}
             castShadow
           />
-          {/* J2 鼓起環 - 右側邊緣 */}
-          <mesh
-            geometry={j2BulgeGeometry}
-            material={materials.darkMetal}
-            position={[0.08, 0, 0]}
-            rotation={[0, 0, Math.PI / 2]}
-            castShadow
-          />
-          {/* J2 螺絲環 */}
+          {/* J2 Mounting Screws */}
           <ScrewRing
-            radius={0.16}
+            radius={0.2}
             count={10}
             height={0.02}
             offsetY={0}
@@ -541,7 +717,7 @@ export function RobotArm(props: ThreeElements["group"]) {
             material={materials.darkMetal}
           />
 
-          {/* Link2 連桿 - 大圓角過渡至 J3 */}
+          {/* Link2 - Transition to J3 */}
           <mesh
             geometry={link2Geometry}
             material={materials.paint}
@@ -550,9 +726,9 @@ export function RobotArm(props: ThreeElements["group"]) {
             receiveShadow
           />
 
-          {/* J3 關節組件 - 肘部關節（橫向同軸圓筒）*/}
+          {/* J3 Joint - Industrial Elbow Joint (Horizontal) */}
           <group ref={joint3Ref} position={[0, 0.56, 0]}>
-            {/* J3 圓筒殼體 */}
+            {/* J3 Industrial Housing */}
             <mesh
               geometry={j3HousingGeometry}
               material={materials.metal}
@@ -560,32 +736,16 @@ export function RobotArm(props: ThreeElements["group"]) {
               castShadow
               receiveShadow
             />
-            {/* J3 鼓起環 - 左側 */}
+            {/* J3 Center Accent Ring */}
             <mesh
-              geometry={j3BulgeGeometry}
-              material={materials.darkMetal}
-              position={[-0.07, 0, 0]}
-              rotation={[0, 0, Math.PI / 2]}
-              castShadow
-            />
-            {/* J3 鼓起環 - 中央 */}
-            <mesh
-              geometry={j3BulgeGeometry}
+              geometry={j3RingGeometry}
               material={materials.paint}
               rotation={[0, 0, Math.PI / 2]}
               castShadow
             />
-            {/* J3 鼓起環 - 右側 */}
-            <mesh
-              geometry={j3BulgeGeometry}
-              material={materials.darkMetal}
-              position={[0.07, 0, 0]}
-              rotation={[0, 0, Math.PI / 2]}
-              castShadow
-            />
-            {/* J3 螺絲環 */}
+            {/* J3 Mounting Screws */}
             <ScrewRing
-              radius={0.14}
+              radius={0.18}
               count={8}
               height={0.02}
               offsetY={0}
@@ -593,60 +753,45 @@ export function RobotArm(props: ThreeElements["group"]) {
               material={materials.darkMetal}
             />
 
-            {/* Link3 連桿 - 大圓角過渡至 J4 */}
+            {/* Link3 - Transition to J4 */}
             <mesh
               geometry={link3Geometry}
               material={materials.paint}
-              position={[0, 0, 0]}
+              position={[0, 0.09, 0]}
               castShadow
               receiveShadow
             />
 
-            {/* J4 關節組件 - 腕部旋轉關節（同軸圓筒）*/}
-            <group ref={joint4Ref} position={[0, 0.2, 0]}>
-              {/* J4 圓筒殼體 */}
+            {/* J4 Joint - Industrial Wrist Roll Joint */}
+            <group ref={joint4Ref} position={[0, 0.29, 0]}>
+              {/* J4 Industrial Housing */}
               <mesh
                 geometry={j4HousingGeometry}
                 material={materials.metal}
                 castShadow
                 receiveShadow
               />
-              {/* J4 鼓起環 - 下方 */}
+              {/* J4 Center Accent Ring */}
               <mesh
-                geometry={j4BulgeGeometry}
-                material={materials.darkMetal}
-                position={[0, -0.04, 0]}
-                rotation={[Math.PI / 2, 0, 0]}
-                castShadow
-              />
-              {/* J4 鼓起環 - 中央 */}
-              <mesh
-                geometry={j4BulgeGeometry}
+                geometry={j4RingGeometry}
                 material={materials.paint}
+                position={[0, 0.0625, 0]}
                 rotation={[Math.PI / 2, 0, 0]}
                 castShadow
               />
-              {/* J4 鼓起環 - 上方 */}
-              <mesh
-                geometry={j4BulgeGeometry}
-                material={materials.darkMetal}
-                position={[0, 0.04, 0]}
-                rotation={[Math.PI / 2, 0, 0]}
-                castShadow
-              />
-              {/* J4 螺絲環 */}
+              {/* J4 Mounting Screws */}
               <ScrewRing
-                radius={0.1}
+                radius={0.14}
                 count={6}
                 height={0.018}
-                offsetY={0.04}
+                offsetY={0.12}
                 geometry={screwGeometry}
                 material={materials.darkMetal}
               />
 
-              {/* J5 關節組件 - 腕部俯仰關節 */}
-              <group ref={joint5Ref} position={[0, 0.1, 0]}>
-                {/* J5 圓筒殼體 */}
+              {/* J5 Joint - Industrial Wrist Pitch Joint */}
+              <group ref={joint5Ref} position={[0, 0.125, 0]}>
+                {/* J5 Industrial Housing */}
                 <mesh
                   geometry={j5HousingGeometry}
                   material={materials.metal}
@@ -654,32 +799,16 @@ export function RobotArm(props: ThreeElements["group"]) {
                   castShadow
                   receiveShadow
                 />
-                {/* J5 鼓起環 - 左側 */}
+                {/* J5 Center Accent Ring */}
                 <mesh
-                  geometry={j5BulgeGeometry}
-                  material={materials.darkMetal}
-                  position={[-0.04, 0, 0]}
-                  rotation={[0, 0, Math.PI / 2]}
-                  castShadow
-                />
-                {/* J5 鼓起環 - 中央 */}
-                <mesh
-                  geometry={j5BulgeGeometry}
+                  geometry={j5RingGeometry}
                   material={materials.paint}
                   rotation={[0, 0, Math.PI / 2]}
                   castShadow
                 />
-                {/* J5 鼓起環 - 右側 */}
-                <mesh
-                  geometry={j5BulgeGeometry}
-                  material={materials.darkMetal}
-                  position={[0.04, 0, 0]}
-                  rotation={[0, 0, Math.PI / 2]}
-                  castShadow
-                />
-                {/* J5 螺絲環 */}
+                {/* J5 Mounting Screws */}
                 <ScrewRing
-                  radius={0.088}
+                  radius={0.12}
                   count={6}
                   height={0.015}
                   offsetY={0}
@@ -687,35 +816,20 @@ export function RobotArm(props: ThreeElements["group"]) {
                   material={materials.darkMetal}
                 />
 
-                {/* J6 關節組件 - 末端旋轉關節 */}
-                <group ref={joint6Ref} position={[0, 0.08, 0]}>
-                  {/* J6 圓筒殼體 */}
+                {/* J6 Joint - Industrial Tool Rotation Joint */}
+                <group ref={joint6Ref} position={[0, 0.11, 0]}>
+                  {/* J6 Industrial Housing */}
                   <mesh
                     geometry={j6HousingGeometry}
                     material={materials.metal}
                     castShadow
                     receiveShadow
                   />
-                  {/* J6 鼓起環 - 下方 */}
+                  {/* J6 Center Accent Ring */}
                   <mesh
-                    geometry={j6BulgeGeometry}
-                    material={materials.darkMetal}
-                    position={[0, -0.025, 0]}
-                    rotation={[Math.PI / 2, 0, 0]}
-                    castShadow
-                  />
-                  {/* J6 鼓起環 - 中央 */}
-                  <mesh
-                    geometry={j6BulgeGeometry}
+                    geometry={j6RingGeometry}
                     material={materials.paint}
-                    rotation={[Math.PI / 2, 0, 0]}
-                    castShadow
-                  />
-                  {/* J6 鼓起環 - 上方 */}
-                  <mesh
-                    geometry={j6BulgeGeometry}
-                    material={materials.darkMetal}
-                    position={[0, 0.025, 0]}
+                    position={[0, 0.04, 0]}
                     rotation={[Math.PI / 2, 0, 0]}
                     castShadow
                   />
