@@ -8,8 +8,7 @@ import {
     OrbitControls,
     PerspectiveCamera,
 } from "@react-three/drei";
-import { RobotArm } from "@/features/robot-sim/components/RobotArm";
-import { Box } from "@/features/robot-sim/components/Box";
+import { GardenerRobotArm } from "@/features/robot-sim/components/GardenerRobotArm";
 
 export function RobotArmScene() {
     return (
@@ -44,8 +43,13 @@ export function RobotArmScene() {
                     <Environment preset="warehouse" />
                 </Suspense>
 
-                <RobotArm position={[0, 0, 0]} />
-                <Box position={[0.8, 0.15, 0]} size={[0.3, 0.3, 0.3]} />
+                <Suspense fallback={null}>
+                    <GardenerRobotArm
+                        position={[0, 1.5, 0]}
+                        scale={0.8}
+                        autoRotate={true}
+                    />
+                </Suspense>
 
                 <mesh
                     receiveShadow

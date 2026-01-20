@@ -1,0 +1,11 @@
+Model Information:
+* title:	Robotic Arm Gardener
+* source:	https://sketchfab.com/3d-models/robotic-arm-gardener-38439b7b581640408deef3806f9aa5ab
+* author:	novikto (https://sketchfab.com/novikto)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Robotic Arm Gardener" (https://sketchfab.com/3d-models/robotic-arm-gardener-38439b7b581640408deef3806f9aa5ab) by novikto (https://sketchfab.com/novikto) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
