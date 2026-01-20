@@ -1,2 +1,4 @@
 front-end/.github/copilot-instructions.md
 front-end/.env.example
+back-end/src/VisualFlow.WebApi/appsettings.Development.json
+back-end/src/VisualFlow.WebApi/appsettings.json
