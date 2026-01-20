@@ -58,6 +58,9 @@ export function GardenerRobotArm({
     const boneControls = useRobotArmStore((state) => state.boneControls);
     const setBoneControls = useRobotArmStore((state) => state.setBoneControls);
 
+    // 動態骨骼引用映射表 - 避免每幀 traverse
+    const dynamicBonesMapRef = useRef<Map<string, THREE.Object3D>>(new Map());
+
     // 載入 GLTF 模型
     const { scene } = useGLTF("/models/robotic_arm_gardener/scene.gltf");
 
@@ -109,16 +112,32 @@ export function GardenerRobotArm({
         // 建立動態骨骼控制配置
         const dynamicBoneControls = new Map<string, BoneControl>();
 
-        // 為每個骨骼建立默認控制（Z軸旋轉，±180度）
+        // 已經有專門控制的骨骼，不加入動態控制
+        const excludedBones = new Set([
+            BONE_NAMES.base,
+            BONE_NAMES.j1,
+            BONE_NAMES.j2,
+            BONE_NAMES.j3,
+            BONE_NAMES.j4,
+            BONE_NAMES.j5,
+            BONE_NAMES.gripper,
+        ]);
+
+        // 為每個骨骼建立默認控制（Z軸旋轉，±180度），排除已控制的骨骼
         boneMap.forEach((bone, boneName) => {
-            dynamicBoneControls.set(boneName, {
-                name: boneName,
-                minDeg: -180,
-                maxDeg: 180,
-                axis: 'z' as const,
-                value: 0, // 初始值為 0 弧度
-            });
+            if (!excludedBones.has(boneName)) {
+                dynamicBoneControls.set(boneName, {
+                    name: boneName,
+                    minDeg: -180,
+                    maxDeg: 180,
+                    axis: 'z' as const,
+                    value: 0, // 初始值為 0 弧度
+                });
+            }
         });
+
+        // 儲存骨骼引用到 ref，避免每幀 traverse
+        dynamicBonesMapRef.current = boneMap;
 
         // 傳送動態骨骼控制到 store
         setBoneControls(dynamicBoneControls);
@@ -161,7 +180,7 @@ export function GardenerRobotArm({
     // 動畫循環 - 控制骨骼旋轉
     useFrame((state, delta) => {
         const bones = bonesRef.current;
-        const lerpSpeed = delta * 5;
+        const lerpSpeed = delta * 15; // 增加速度以獲得更即時的響應
 
         if (isManualMode) {
             // 手動模式：根據控制面板調整骨骼旋轉
@@ -216,33 +235,33 @@ export function GardenerRobotArm({
             }
 
             // 動態骨骼控制 - 應用 store 中的所有骨骼控制值
+            // 使用預先建立的引用，避免每幀 traverse
             boneControls.forEach((control, boneName) => {
-                clonedScene.traverse((child) => {
-                    if (child.name === boneName && child instanceof THREE.Object3D) {
-                        const axis = control.axis;
-                        const targetValue = control.value;
+                const bone = dynamicBonesMapRef.current.get(boneName);
+                if (bone) {
+                    const axis = control.axis;
+                    const targetValue = control.value;
 
-                        if (axis === 'x') {
-                            child.rotation.x = THREE.MathUtils.lerp(
-                                child.rotation.x,
-                                targetValue,
-                                lerpSpeed
-                            );
-                        } else if (axis === 'y') {
-                            child.rotation.y = THREE.MathUtils.lerp(
-                                child.rotation.y,
-                                targetValue,
-                                lerpSpeed
-                            );
-                        } else if (axis === 'z') {
-                            child.rotation.z = THREE.MathUtils.lerp(
-                                child.rotation.z,
-                                targetValue,
-                                lerpSpeed
-                            );
-                        }
+                    if (axis === 'x') {
+                        bone.rotation.x = THREE.MathUtils.lerp(
+                            bone.rotation.x,
+                            targetValue,
+                            lerpSpeed
+                        );
+                    } else if (axis === 'y') {
+                        bone.rotation.y = THREE.MathUtils.lerp(
+                            bone.rotation.y,
+                            targetValue,
+                            lerpSpeed
+                        );
+                    } else if (axis === 'z') {
+                        bone.rotation.z = THREE.MathUtils.lerp(
+                            bone.rotation.z,
+                            targetValue,
+                            lerpSpeed
+                        );
                     }
-                });
+                }
             });
 
         } else if (autoRotate) {
