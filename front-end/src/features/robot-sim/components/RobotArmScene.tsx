@@ -69,11 +69,15 @@ export function RobotArmScene() {
                 />
 
                 <OrbitControls
-                    enablePan
-                    enableDamping
-                    minDistance={1.5}
-                    maxDistance={7.5}
-                    maxPolarAngle={Math.PI * 0.5}
+                    enablePan={true}
+                    enableZoom={true}
+                    enableRotate={true}
+                    enableDamping={true}
+                    dampingFactor={0.05}
+                    minDistance={0.5}
+                    maxDistance={15}
+                    minPolarAngle={0}
+                    maxPolarAngle={Math.PI}
                 />
             </Canvas>
         </div>
