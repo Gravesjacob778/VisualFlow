@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using FluentValidation;
 using VisualFlow.Domain.Exceptions;
+using VisualFlow.WebApi.Models;
 
 namespace VisualFlow.WebApi.Middleware;
 
@@ -36,51 +37,55 @@ public class ExceptionHandlingMiddleware
     {
         context.Response.ContentType = "application/json";
 
-        var response = new ErrorResponse();
+        var response = new ApiErrorResponse();
 
         switch (exception)
         {
             case ValidationException validationException:
                 context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                response.StatusCode = (int)HttpStatusCode.BadRequest;
-                response.Message = "Validation failed";
-                response.Errors = validationException.Errors
-                    .GroupBy(e => e.PropertyName)
-                    .ToDictionary(
-                        g => g.Key,
-                        g => g.Select(e => e.ErrorMessage).ToArray()
-                    );
+                response = new ApiErrorResponse
+                {
+                    Message = "Validation failed",
+                    Errors = validationException.Errors
+                        .Select(e => new FieldError(e.PropertyName, e.ErrorMessage))
+                        .ToList()
+                };
                 break;
 
             case NotFoundException notFoundException:
                 context.Response.StatusCode = (int)HttpStatusCode.NotFound;
-                response.StatusCode = (int)HttpStatusCode.NotFound;
-                response.Message = notFoundException.Message;
+                response = new ApiErrorResponse { Message = notFoundException.Message };
                 break;
 
             case DomainValidationException domainValidationException:
                 context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                response.StatusCode = (int)HttpStatusCode.BadRequest;
-                response.Message = domainValidationException.Message;
-                response.Errors = domainValidationException.Errors;
+                response = new ApiErrorResponse
+                {
+                    Message = domainValidationException.Message,
+                    Errors = domainValidationException.Errors
+                        .SelectMany(kvp => kvp.Value.Select(message => new FieldError(kvp.Key, message)))
+                        .ToList()
+                };
                 break;
 
             case DomainException domainException:
                 context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                response.StatusCode = (int)HttpStatusCode.BadRequest;
-                response.Message = domainException.Message;
+                response = new ApiErrorResponse { Message = domainException.Message };
+                break;
+
+            case ConflictException conflictException:
+                context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+                response = new ApiErrorResponse { Message = conflictException.Message };
                 break;
 
             case UnauthorizedAccessException:
                 context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                response.Message = "Unauthorized access";
+                response = new ApiErrorResponse { Message = "Unauthorized access" };
                 break;
 
             default:
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                response.Message = "An internal server error occurred";
+                response = new ApiErrorResponse { Message = "An internal server error occurred" };
                 break;
         }
 
@@ -91,14 +96,4 @@ public class ExceptionHandlingMiddleware
 
         await context.Response.WriteAsync(JsonSerializer.Serialize(response, jsonOptions));
     }
-}
-
-/// <summary>
-/// Standard error response model.
-/// </summary>
-public class ErrorResponse
-{
-    public int StatusCode { get; set; }
-    public string Message { get; set; } = string.Empty;
-    public IDictionary<string, string[]>? Errors { get; set; }
 }

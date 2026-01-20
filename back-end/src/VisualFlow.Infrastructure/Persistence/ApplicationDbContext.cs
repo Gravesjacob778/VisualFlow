@@ -23,6 +23,9 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
         _dateTimeService = dateTimeService;
     }
 
+    public DbSet<RobotConfig> RobotConfigs => Set<RobotConfig>();
+    public DbSet<RobotConfigGltfModel> RobotConfigGltfModels => Set<RobotConfigGltfModel>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());

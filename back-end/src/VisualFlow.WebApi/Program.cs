@@ -21,6 +21,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 // Register current user service
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IApiUrlProvider, ApiUrlProvider>();
 
 // Add Controllers
 builder.Services.AddControllers();
