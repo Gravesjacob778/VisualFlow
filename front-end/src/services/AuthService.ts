@@ -12,16 +12,11 @@ interface LoginResponse {
 }
 
 export class AuthService extends BaseService {
-    constructor() {
-        super();
-        // Override base URL for auth API
-        this.baseURL = "http://localhost:5000/api";
-    }
 
     async login(
         email: string,
         password: string
-    ): Promise<HttpActionResponse<LoginResponse>> {
+    ): Promise<HttpActionResponse> {
         const body: LoginRequest = {
             email,
             password,
