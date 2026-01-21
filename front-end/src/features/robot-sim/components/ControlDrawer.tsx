@@ -9,6 +9,7 @@ import {
   RotateCcw,
   Plus,
   Hand,
+  Save,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -19,6 +20,8 @@ import {
   type JointAngles,
   type BoneControl,
 } from "@/stores/robotArmStore";
+import { robotConfigService } from "@/services";
+import type { CreateRobotConfigRequest } from "@/types";
 
 interface ControlConfig {
   id: keyof JointAngles | "gripper" | "claw";
@@ -33,7 +36,6 @@ const controlConfigs: ControlConfig[] = [
   { id: "j4", name: "Wrist Roll", minDeg: -122, maxDeg: 125 },
   { id: "j5", name: "Wrist Pitch", minDeg: -98, maxDeg: 108 },
   { id: "gripper", name: "Gripper (自轉)", minDeg: -360, maxDeg: 360 },
-  { id: "claw", name: "Claw (開合)", minDeg: 0, maxDeg: 100 },
 ];
 
 export function ControlDrawer() {
@@ -54,6 +56,7 @@ export function ControlDrawer() {
 
   // Local drawer state
   const [isOpen, setIsOpen] = React.useState(true);
+  const [isSaving, setIsSaving] = React.useState(false);
 
   const getControlValue = (config: ControlConfig): number => {
     if (config.id === "gripper") {
@@ -92,6 +95,55 @@ export function ControlDrawer() {
 
   const handleAddFlow = () => {
     router.push("/editor/new");
+  };
+
+  const handleSaveConfiguration = async () => {
+    setIsSaving(true);
+    try {
+      // 準備 bone controls 陣列
+      const boneControlsArray = Array.from(boneControls.entries()).map(
+        ([boneName, control]) => ({
+          boneName,
+          position: [0, 0, 0] as [number, number, number],
+          rotation: [
+            control.axis === "x" ? control.value : 0,
+            control.axis === "y" ? control.value : 0,
+            control.axis === "z" ? control.value : 0,
+          ] as [number, number, number],
+          scale: [1, 1, 1] as [number, number, number],
+        })
+      );
+
+      const request: CreateRobotConfigRequest = {
+        name: `Robot Config ${new Date().toLocaleString()}`,
+        description: "Saved from Control Panel",
+        transform: {
+          position: [0, 0, 0],
+          rotation: [0, 0, 0],
+          scale: [1, 1, 1],
+        },
+        jointAngles: { ...jointAngles },
+        gripper: {
+          gripperValue: gripperValue / 360, // 轉換為 0-1 範圍
+          clawValue: clawValue / 100, // 轉換為 0-1 範圍
+        },
+        boneControls: boneControlsArray.length > 0 ? boneControlsArray : undefined,
+        tags: ["manual-save"],
+      };
+
+      const response = await robotConfigService.createConfiguration(request);
+
+      if (response.isSuccess) {
+        alert("✅ Configuration saved successfully!");
+      } else {
+        alert(`❌ Failed to save: ${response.message}`);
+      }
+    } catch (error) {
+      console.error("Error saving configuration:", error);
+      alert("❌ Error saving configuration");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -245,8 +297,16 @@ export function ControlDrawer() {
             </div>
           </div>
 
-          {/* Add Flow 按鈕 */}
-          <div className="border-t border-white/10 p-4">
+          {/* Action Buttons */}
+          <div className="border-t border-white/10 p-4 space-y-2">
+            <button
+              onClick={handleSaveConfiguration}
+              disabled={isSaving}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-sm font-medium transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Save size={16} />
+              {isSaving ? "Saving..." : "Save"}
+            </button>
             <button
               onClick={handleAddFlow}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium transition-colors hover:bg-blue-700"
