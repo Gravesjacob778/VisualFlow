@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, Upload, Loader2 } from "lucide-react";
 import { robotConfigService } from "@/services";
 
@@ -8,14 +8,46 @@ interface Component {
     id: string;
     name: string;
     type: string;
+    fileName?: string;
 }
 
 export function ComponentDrawer() {
     const [isOpen, setIsOpen] = useState(true);
     const [components, setComponents] = useState<Component[]>([]);
     const [uploading, setUploading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+    // Fetch components list on mount
+    useEffect(() => {
+        const fetchComponents = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const response = await robotConfigService.getComponentsList();
+
+                if (response.isSuccess && Array.isArray(response.data)) {
+                    const mappedComponents: Component[] = response.data.map((item: any) => ({
+                        id: item.id || item._id || String(Math.random()),
+                        name: item.name || item.fileName || "Unknown Component",
+                        type: item.type || "Component",
+                        fileName: item.fileName,
+                    }));
+                    setComponents(mappedComponents);
+                } else {
+                    console.warn("Failed to fetch components:", response.message);
+                }
+            } catch (err) {
+                console.error("Error fetching components:", err);
+                setError("無法載入元件列表");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        void fetchComponents();
+    }, []);
 
     const handleFileSelect = () => {
         fileInputRef.current?.click();
@@ -84,21 +116,31 @@ export function ComponentDrawer() {
 
                     {/* 元件列表 */}
                     <div className="flex-1 overflow-y-auto p-3">
-                        <div className="space-y-2">
-                            {components.map((component) => (
-                                <div
-                                    key={component.id}
-                                    className="rounded-lg border border-white/10 bg-white/5 p-3 hover:bg-white/10 transition-colors cursor-pointer"
-                                >
-                                    <div className="font-medium text-sm">
-                                        {component.name}
+                        {loading ? (
+                            <div className="flex items-center justify-center py-8">
+                                <Loader2 className="h-6 w-6 animate-spin text-white/40" />
+                            </div>
+                        ) : components.length === 0 ? (
+                            <div className="text-center py-8 text-white/40 text-sm">
+                                No components available
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {components.map((component) => (
+                                    <div
+                                        key={component.id}
+                                        className="rounded-lg border border-white/10 bg-white/5 p-3 hover:bg-white/10 transition-colors cursor-pointer"
+                                    >
+                                        <div className="font-medium text-sm">
+                                            {component.name}
+                                        </div>
+                                        <div className="text-xs text-white/60 mt-1">
+                                            {component.type}
+                                        </div>
                                     </div>
-                                    <div className="text-xs text-white/60 mt-1">
-                                        {component.type}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* 新增 / 上傳按鈕 */}

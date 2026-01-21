@@ -10,6 +10,7 @@ public sealed record ComponentFileDto
     public long FileSize { get; init; }
     public string ContentType { get; init; } = string.Empty;
     public DateTime UploadedAt { get; init; }
+    public string? UploadedBy { get; init; }
     public string ComponentType { get; init; } = string.Empty;
     public List<string> ContainsFiles { get; init; } = [];
     public string Url { get; init; } = string.Empty;

@@ -7,17 +7,11 @@ namespace VisualFlow.Application.Common.Behaviours;
 /// <summary>
 /// MediatR pipeline behavior for monitoring long-running requests.
 /// </summary>
-public class PerformanceBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+public class PerformanceBehaviour<TRequest, TResponse>(ILogger<PerformanceBehaviour<TRequest, TResponse>> logger) : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
 {
-    private readonly Stopwatch _timer;
-    private readonly ILogger<PerformanceBehaviour<TRequest, TResponse>> _logger;
-
-    public PerformanceBehaviour(ILogger<PerformanceBehaviour<TRequest, TResponse>> logger)
-    {
-        _timer = new Stopwatch();
-        _logger = logger;
-    }
+    private readonly Stopwatch _timer = new();
+    private readonly ILogger<PerformanceBehaviour<TRequest, TResponse>> _logger = logger;
 
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {

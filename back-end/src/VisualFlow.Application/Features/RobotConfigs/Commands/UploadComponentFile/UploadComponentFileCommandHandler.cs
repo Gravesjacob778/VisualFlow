@@ -1,3 +1,4 @@
+using AutoMapper;
 using MediatR;
 using VisualFlow.Application.Common.Interfaces;
 using VisualFlow.Application.Features.RobotConfigs.Dtos;
@@ -13,13 +14,17 @@ public sealed class UploadComponentFileCommandHandler(
     IUnitOfWork unitOfWork,
     IFileStorageService fileStorageService,
     IZipValidationService zipValidationService,
-    IRepository<ComponentFile> repository)
+    IRepository<ComponentFile> repository,
+    IMapper mapper,
+    IApiUrlProvider apiUrlProvider)
         : IRequestHandler<UploadComponentFileCommand, ComponentFileDto>
 {
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IFileStorageService _fileStorageService = fileStorageService;
     private readonly IZipValidationService _zipValidationService = zipValidationService;
     private readonly IRepository<ComponentFile> _repository = repository;
+    private readonly IMapper _mapper = mapper;
+    private readonly IApiUrlProvider _apiUrlProvider = apiUrlProvider;
 
     public async Task<ComponentFileDto> Handle(
         UploadComponentFileCommand request,
@@ -58,17 +63,11 @@ public sealed class UploadComponentFileCommandHandler(
         await _repository.AddAsync(componentFile, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Return DTO
-        return new ComponentFileDto
+        // Map to DTO and set URL
+        var dto = _mapper.Map<ComponentFileDto>(componentFile);
+        return dto with
         {
-            Id = componentFile.Id,
-            FileName = componentFile.FileName,
-            FileSize = componentFile.FileSize,
-            ContentType = componentFile.ContentType,
-            UploadedAt = componentFile.CreatedAt,
-            ComponentType = componentFile.ComponentType,
-            ContainsFiles = componentFile.ContainedFiles,
-            Url = $"/api/robot-configs/components/{componentFile.Id}"
+            Url = _apiUrlProvider.GetComponentFileUrl(componentFile.Id)
         };
     }
 }

@@ -131,6 +131,13 @@ export class RobotConfigService extends BaseService {
 
         return this.post(`${this.endpoint}/components`, formData);
     }
+
+    /**
+     * Get list of all available components from database
+     */
+    async getComponentsList(): Promise<HttpActionResponse> {
+        return this.get(`${this.endpoint}/components`);
+    }
 }
 
 // Export singleton instance

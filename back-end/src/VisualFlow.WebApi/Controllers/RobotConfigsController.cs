@@ -10,6 +10,7 @@ using VisualFlow.Application.Features.RobotConfigs.Commands.UploadComponentFile;
 using VisualFlow.Application.Features.RobotConfigs.Commands.UploadRobotConfigGltfModel;
 using VisualFlow.Application.Features.RobotConfigs.Dtos;
 using VisualFlow.Application.Features.RobotConfigs.Queries.DownloadRobotConfigGltfModel;
+using VisualFlow.Application.Features.RobotConfigs.Queries.GetAllComponentFiles;
 using VisualFlow.Application.Features.RobotConfigs.Queries.GetRobotConfigById;
 using VisualFlow.Application.Features.RobotConfigs.Queries.GetRobotConfigGltfModelMetadata;
 using VisualFlow.Application.Features.RobotConfigs.Queries.GetRobotConfigs;
@@ -214,6 +215,24 @@ public sealed class RobotConfigsController : BaseApiController
     {
         await Mediator.Send(new DeleteRobotConfigGltfModelCommand(id), cancellationToken);
         return Ok(ApiResponse.OkMessage("模型檔案已成功刪除"));
+    }
+
+    /// <summary>
+    /// Gets all uploaded component files.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>List of all component files.</returns>
+    [HttpGet("components")]
+    [ProducesResponseType(typeof(ApiResponse<ComponentFileListDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetAllComponents(CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(new GetAllComponentFilesQuery(), cancellationToken);
+        return Ok(new
+        {
+            success = true,
+            data = result
+        });
     }
 
     /// <summary>

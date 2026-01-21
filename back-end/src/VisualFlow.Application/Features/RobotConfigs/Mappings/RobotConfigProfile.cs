@@ -21,5 +21,11 @@ public sealed class RobotConfigProfile : Profile
         CreateMap<RobotConfig, RobotConfigSummaryDto>()
             .ForCtorParam(nameof(RobotConfigSummaryDto.UpdatedAt), opt => opt.MapFrom(src => src.ModifiedAt))
             .ForCtorParam(nameof(RobotConfigSummaryDto.GltfModel), opt => opt.MapFrom(src => src.GltfModel));
+
+        CreateMap<ComponentFile, ComponentFileDto>()
+            .ForMember(dest => dest.UploadedAt, opt => opt.MapFrom(src => src.CreatedAt))
+            .ForMember(dest => dest.UploadedBy, opt => opt.MapFrom(src => src.CreatedBy))
+            .ForMember(dest => dest.ContainsFiles, opt => opt.MapFrom(src => src.ContainedFiles))
+            .ForMember(dest => dest.Url, opt => opt.MapFrom(_ => string.Empty));
     }
 }

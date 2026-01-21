@@ -6,4 +6,5 @@ namespace VisualFlow.Application.Common.Interfaces;
 public interface IApiUrlProvider
 {
     string GetRobotConfigGltfModelUrl(Guid robotConfigId);
+    string GetComponentFileUrl(Guid componentFileId);
 }

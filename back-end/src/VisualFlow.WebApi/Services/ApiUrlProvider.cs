@@ -25,4 +25,16 @@ public sealed class ApiUrlProvider : IApiUrlProvider
         var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
         return $"{baseUrl}/api/robot-configs/{robotConfigId}/gltf-model";
     }
+
+    public string GetComponentFileUrl(Guid componentFileId)
+    {
+        var request = _httpContextAccessor.HttpContext?.Request;
+        if (request is null)
+        {
+            return $"/api/robot-configs/components/{componentFileId}";
+        }
+
+        var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
+        return $"{baseUrl}/api/robot-configs/components/{componentFileId}";
+    }
 }
