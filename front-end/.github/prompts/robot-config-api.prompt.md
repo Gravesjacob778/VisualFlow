@@ -61,8 +61,8 @@
     "j6": 關節6角度數值
   },
   "gripper": {
-    "gripperValue": 夾爪開合數值 (0-1範圍),
-    "clawValue": 爪子開合數值 (0-1範圍)
+    "gripperValue": 夾爪自轉角度 (度數，範圍 -360 至 360，可為負值),
+    "clawValue": 爪子開合數值 (0-1 範圍，0=閉合，1=全開)
   },
   "boneControls": [
     {
@@ -450,7 +450,8 @@ GET /api/robot-configs?page=1&pageSize=20&search=機械手臂&sortBy=name&sortOr
 
 ### 夾爪數值 (gripperValue, clawValue)
 - 必填
-- 範圍: 0 至 1（含）
+- gripperValue：度數範圍 -360 至 360（含），可為負值
+- clawValue：0 至 1（含），0=閉合，1=全開
 - 數值為浮點數
 
 ### 骨骼控制陣列 (boneControls)

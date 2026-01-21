@@ -42,8 +42,8 @@ public static class RobotConfigValidationRules
     {
         return ruleBuilder
             .NotNull().WithMessage("Gripper is required")
-            .Must(g => g.GripperValue is >= 0 and <= 1)
-            .WithMessage("Gripper value must be between 0 and 1")
+            .Must(g => g.GripperValue is >= -360 and <= 360)
+            .WithMessage("Gripper value must be between -360 and 360")
             .Must(g => g.ClawValue is >= 0 and <= 1)
             .WithMessage("Claw value must be between 0 and 1");
     }

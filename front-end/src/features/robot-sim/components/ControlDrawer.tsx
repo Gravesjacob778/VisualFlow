@@ -124,8 +124,10 @@ export function ControlDrawer() {
         },
         jointAngles: { ...jointAngles },
         gripper: {
-          gripperValue: gripperValue / 360, // 轉換為 0-1 範圍
-          clawValue: clawValue / 100, // 轉換為 0-1 範圍
+          // Allow degrees (-360 to 360)
+          gripperValue: gripperValue,
+          // Normalize claw opening to 0-1
+          clawValue: clawValue,
         },
         boneControls: boneControlsArray.length > 0 ? boneControlsArray : undefined,
         tags: ["manual-save"],

@@ -27,8 +27,12 @@ export interface JointAngles {
  * Gripper configuration
  */
 export interface GripperConfig {
-    gripperValue: number; // 0-1 range
-    clawValue: number; // 0-1 range
+    // Gripper self-rotation angle in degrees, supports negative values
+    // Valid range: -360 to 360 (degrees)
+    gripperValue: number;
+    // Claw opening as normalized fraction between 0 and 1
+    // 0 = fully closed, 1 = fully open
+    clawValue: number;
 }
 
 /**
