@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Plus, Upload, Loader2 } from "lucide-react";
+import { robotConfigService } from "@/services";
 
 interface Component {
     id: string;
@@ -11,27 +12,65 @@ interface Component {
 
 export function ComponentDrawer() {
     const [isOpen, setIsOpen] = useState(true);
-    const [components, setComponents] = useState<Component[]>([
-        { id: "1", name: "Gripper", type: "End Effector" },
-        { id: "2", name: "Sensor", type: "Tool" },
-    ]);
+    const [components, setComponents] = useState<Component[]>([]);
+    const [uploading, setUploading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    const addComponent = () => {
-        const newComponent: Component = {
-            id: Date.now().toString(),
-            name: `Component ${components.length + 1}`,
-            type: "Custom",
-        };
-        setComponents([...components, newComponent]);
+    const handleFileSelect = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleUpload = async (file: File) => {
+        const sizeLimit = 52_428_800; // 50MB
+        if (!file.name.toLowerCase().endsWith(".zip")) {
+            setError("只支援 ZIP 壓縮檔");
+            return;
+        }
+        if (file.size > sizeLimit) {
+            setError("檔案大小不可超過 50MB");
+            return;
+        }
+
+        setError(null);
+        setUploading(true);
+
+        try {
+            const response = await robotConfigService.uploadComponent(file);
+
+            if (!response.isSuccess) {
+                throw new Error(response.message || "上傳失敗");
+            }
+
+            const newComponent: Component = {
+                id: response.data?.id || Date.now().toString(),
+                name: response.data?.fileName || file.name,
+                type: "Uploaded ZIP",
+            };
+
+            setComponents((prev) => [newComponent, ...prev]);
+        } catch (err) {
+            console.error("Upload component failed", err);
+            setError(err instanceof Error ? err.message : "上傳發生錯誤");
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        void handleUpload(file);
+        // reset input so same file can be reselected
+        e.target.value = "";
     };
 
     return (
         <>
             {/* 抽屜內容 */}
             <aside
-                className={`absolute left-0 top-0 z-10 h-full bg-[#0f141a] border-r border-white/10 transition-transform duration-300 ${
-                    isOpen ? "translate-x-0" : "-translate-x-full"
-                }`}
+                className={`absolute left-0 top-0 z-10 h-full bg-[#0f141a] border-r border-white/10 transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"
+                    }`}
                 style={{ width: "280px" }}
             >
                 <div className="flex h-full flex-col">
@@ -62,15 +101,34 @@ export function ComponentDrawer() {
                         </div>
                     </div>
 
-                    {/* 新增按鈕 */}
-                    <div className="border-t border-white/10 p-3">
+                    {/* 新增 / 上傳按鈕 */}
+                    <div className="border-t border-white/10 p-3 space-y-2">
                         <button
-                            onClick={addComponent}
-                            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium hover:bg-blue-700 transition-colors"
+                            onClick={handleFileSelect}
+                            disabled={uploading}
+                            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <Plus size={16} />
-                            Add Component
+                            {uploading ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Upload size={16} />
+                            )}
+                            {uploading ? "Uploading..." : "Add Component"}
                         </button>
+
+                        {error && (
+                            <div className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+                                {error}
+                            </div>
+                        )}
+
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".zip"
+                            onChange={onFileChange}
+                            className="hidden"
+                        />
                     </div>
                 </div>
             </aside>
@@ -78,9 +136,8 @@ export function ComponentDrawer() {
             {/* 切換按鈕 */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`absolute top-1/2 z-20 -translate-y-1/2 rounded-r-lg bg-[#0f141a] border border-l-0 border-white/10 p-2 hover:bg-white/5 transition-all ${
-                    isOpen ? "left-[280px]" : "left-0"
-                }`}
+                className={`absolute top-1/2 z-20 -translate-y-1/2 rounded-r-lg bg-[#0f141a] border border-l-0 border-white/10 p-2 hover:bg-white/5 transition-all ${isOpen ? "left-[280px]" : "left-0"
+                    }`}
                 aria-label={isOpen ? "Close drawer" : "Open drawer"}
             >
                 {isOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}

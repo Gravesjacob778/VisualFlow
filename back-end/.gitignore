@@ -182,3 +182,5 @@ docker/.env
 # Logs
 logs/
 *.log
+## wwwroot
+**/wwwroot/*

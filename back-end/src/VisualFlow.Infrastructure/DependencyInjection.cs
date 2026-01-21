@@ -35,6 +35,7 @@ public static class DependencyInjection
         // Register services
         services.AddTransient<IDateTimeService, DateTimeService>();
         services.AddSingleton<IFileStorageService, FileSystemStorageService>();
+        services.AddTransient<IZipValidationService, ZipValidationService>();
 
         return services;
     }

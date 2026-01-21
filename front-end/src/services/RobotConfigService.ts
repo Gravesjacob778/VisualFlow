@@ -121,6 +121,16 @@ export class RobotConfigService extends BaseService {
     async deleteGltfModel(configId: string): Promise<HttpActionResponse> {
         return this.delete(`${this.endpoint}/${configId}/gltf-model`);
     }
+
+    /**
+     * Upload component ZIP file for a configuration
+     */
+    async uploadComponent(file: File): Promise<HttpActionResponse> {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        return this.post(`${this.endpoint}/components`, formData);
+    }
 }
 
 // Export singleton instance

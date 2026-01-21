@@ -32,8 +32,9 @@ public sealed class FileSystemStorageService : IFileStorageService
         }
 
         var safeFileName = Path.GetFileName(fileName);
-        var fileId = Guid.NewGuid().ToString("N");
-        var relativePath = Path.Combine("robot-configs", robotConfigId.ToString("D"), $"{fileId}{extension}");
+        var fileId = Guid.NewGuid().ToString("D");
+        var storageFileName = $"{fileId}{extension}";
+        var relativePath = Path.Combine("gltf-models", storageFileName);
         var fullPath = GetSafeFullPath(relativePath);
 
         Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
@@ -45,7 +46,41 @@ public sealed class FileSystemStorageService : IFileStorageService
 
         return new StoredFile(
             relativePath,
-            safeFileName,
+            storageFileName,
+            stored.Length,
+            contentType,
+            DateTime.UtcNow);
+    }
+
+    public async Task<StoredFile> SaveComponentFileAsync(
+        Stream content,
+        string fileName,
+        string contentType,
+        CancellationToken cancellationToken = default)
+    {
+        // Only accept .zip files
+        var extension = Path.GetExtension(fileName);
+        if (!string.Equals(extension, ".zip", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Only ZIP files are allowed");
+        }
+
+        var safeFileName = Path.GetFileName(fileName);
+        var fileId = Guid.NewGuid().ToString("D");
+        var storageFileName = $"{fileId}.zip";
+        var relativePath = Path.Combine("components", storageFileName);
+        var fullPath = GetSafeFullPath(relativePath);
+
+        Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+
+        await using var fileStream = new FileStream(fullPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        await content.CopyToAsync(fileStream, cancellationToken);
+
+        var stored = new FileInfo(fullPath);
+
+        return new StoredFile(
+            relativePath,
+            storageFileName,
             stored.Length,
             contentType,
             DateTime.UtcNow);

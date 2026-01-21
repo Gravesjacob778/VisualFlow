@@ -5,7 +5,13 @@ namespace VisualFlow.Application.Common.Models;
 /// </summary>
 public sealed record StoredFile(
     string StoragePath,
-    string FileName,
+    string StorageFileName,
     long FileSize,
     string ContentType,
-    DateTime UploadedAt);
+    DateTime UploadedAt)
+{
+    /// <summary>
+    /// Legacy property for backward compatibility.
+    /// </summary>
+    public string FileName => StorageFileName;
+};

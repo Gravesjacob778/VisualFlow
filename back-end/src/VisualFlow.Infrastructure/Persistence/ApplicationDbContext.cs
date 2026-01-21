@@ -25,6 +25,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 
     public DbSet<RobotConfig> RobotConfigs => Set<RobotConfig>();
     public DbSet<RobotConfigGltfModel> RobotConfigGltfModels => Set<RobotConfigGltfModel>();
+    public DbSet<ComponentFile> ComponentFiles => Set<ComponentFile>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

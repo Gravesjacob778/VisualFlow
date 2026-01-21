@@ -1,0 +1,57 @@
+### Upload Component File Test
+### POST /api/robot-configs/components
+### 測試上傳機器人元件壓縮檔
+
+@baseUrl = http://localhost:5253
+@token = {{auth-test.http:authResponse.response.body.token}}
+
+### 1. Upload a component ZIP file (gripper)
+POST {{baseUrl}}/api/robot-configs/components
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="gripper_component.zip"
+Content-Type: application/zip
+
+< ./test-files/sample_component.zip
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="componentType"
+
+gripper
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 2. Upload without specifying component type (defaults to "other")
+POST {{baseUrl}}/api/robot-configs/components
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="sensor_component.zip"
+Content-Type: application/zip
+
+< ./test-files/sample_component.zip
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 3. Test: Upload non-ZIP file (should fail with 400)
+POST {{baseUrl}}/api/robot-configs/components
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="model.gltf"
+Content-Type: model/gltf+json
+
+< ./test-files/sample_model.gltf
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 4. Test: Upload without file (should fail with 400)
+POST {{baseUrl}}/api/robot-configs/components
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="componentType"
+
+gripper
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
