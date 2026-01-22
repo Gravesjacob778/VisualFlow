@@ -32,13 +32,7 @@ public sealed class GetModelGltfJsonQueryHandler(
         using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read, leaveOpen: false);
 
         var gltfEntry = archive.Entries
-            .FirstOrDefault(entry => string.Equals(Path.GetExtension(entry.FullName), ".gltf", StringComparison.OrdinalIgnoreCase));
-
-        if (gltfEntry is null)
-        {
-            throw new NotFoundException("GLTF", request.ModelId);
-        }
-
+            .FirstOrDefault(entry => string.Equals(Path.GetExtension(entry.FullName), ".gltf", StringComparison.OrdinalIgnoreCase)) ?? throw new NotFoundException("GLTF", request.ModelId);
         await using var entryStream = gltfEntry.Open();
         using var reader = new StreamReader(entryStream);
         var rawJson = await reader.ReadToEndAsync(cancellationToken);
@@ -106,7 +100,7 @@ public sealed class GetModelGltfJsonQueryHandler(
             }
 
             var safeResourcePath = EncodePathSegments(uri);
-            obj["uri"] = $"/api/models/{modelId}/resources/{safeResourcePath}";
+            obj["uri"] = $"{safeResourcePath}";
         }
     }
 

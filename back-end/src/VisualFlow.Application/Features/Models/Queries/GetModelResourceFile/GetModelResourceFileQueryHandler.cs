@@ -42,13 +42,7 @@ public sealed class GetModelResourceFileQueryHandler(
 
         await using var zipStream = await _fileStorageService.OpenReadAsync(component.StoragePath, cancellationToken);
         using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read, leaveOpen: false);
-        var entry = archive.GetEntry(entryName);
-
-        if (entry is null)
-        {
-            throw new NotFoundException("Resource", request.ResourcePath);
-        }
-
+        var entry = archive.GetEntry(entryName) ?? throw new NotFoundException("Resource", request.ResourcePath);
         await using var entryStream = entry.Open();
         var memoryStream = new MemoryStream();
         await entryStream.CopyToAsync(memoryStream, cancellationToken);
