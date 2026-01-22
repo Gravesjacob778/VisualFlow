@@ -41,9 +41,7 @@ export function ComponentDrawer() {
                 setLoading(true);
                 setError(null);
                 const response = await robotConfigService.getComponentsList();
-
                 if (response.success) {
-                    console.log("Componets List", response.data);
                     const mappedComponents: Component[] = (response.data as ComponentListResponse).items.map((item: ComponentItem) => ({
                         id: item.id,
                         name: item.fileName || "Unknown Component",
@@ -51,7 +49,6 @@ export function ComponentDrawer() {
                         fileName: item.fileName,
                     }));
                     setComponents(mappedComponents);
-                    console.log("Componets List", components);
                 } else {
                     console.warn("Failed to fetch components:", response.message);
                 }
