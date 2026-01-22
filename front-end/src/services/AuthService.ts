@@ -6,11 +6,6 @@ interface LoginRequest {
     password: string;
 }
 
-interface LoginResponse {
-    message: string;
-    expiresIn: number;
-}
-
 export class AuthService extends BaseService {
 
     async login(
@@ -22,10 +17,10 @@ export class AuthService extends BaseService {
             password,
         };
 
-        return this.post("/auth/login", body);
+        return super.post("/auth/login", body);
     }
 
     async logout(): Promise<HttpActionResponse> {
-        return this.post("/auth/logout");
+        return super.post("/auth/logout");
     }
 }

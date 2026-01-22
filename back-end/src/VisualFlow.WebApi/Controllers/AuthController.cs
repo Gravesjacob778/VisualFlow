@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VisualFlow.WebApi.Models;
 using VisualFlow.WebApi.Services;
 
 namespace VisualFlow.WebApi.Controllers;
@@ -51,7 +52,7 @@ public class AuthController : ControllerBase
 
         Response.Cookies.Append(TokenCookieName, token, cookieOptions);
 
-        return Ok(new { message = "Login successful", expiresIn = TokenCookieExpirationHours });
+        return Ok(ApiResponse.OkMessage("Login successful"));
     }
 
     /// <summary>
@@ -63,7 +64,7 @@ public class AuthController : ControllerBase
     {
         // Remove token cookie
         Response.Cookies.Delete(TokenCookieName);
-        return Ok(new { message = "Logout successful" });
+        return Ok(ApiResponse.OkMessage("Logout successful"));
     }
 
     /// <summary>

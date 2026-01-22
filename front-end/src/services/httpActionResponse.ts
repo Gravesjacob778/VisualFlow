@@ -1,6 +1,6 @@
 export interface HttpActionResponse {
-    isSuccess: boolean;
+    success: boolean;
     statusCode: number;
     message: string;
-    data?: unknown;
+    data?: any;
 }

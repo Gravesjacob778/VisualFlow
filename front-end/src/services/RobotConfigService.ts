@@ -2,11 +2,8 @@ import { BaseService } from "@/services/BaseService";
 import type { HttpActionResponse } from "@/services/httpActionResponse";
 import type {
     CreateRobotConfigRequest,
-    RobotConfiguration,
     RobotConfigListQuery,
-    RobotConfigListResponse,
     UpdateRobotConfigRequest,
-    GltfModelMetadata,
 } from "@/types/robot-config";
 
 /**
@@ -22,7 +19,7 @@ export class RobotConfigService extends BaseService {
     async createConfiguration(
         request: CreateRobotConfigRequest
     ): Promise<HttpActionResponse> {
-        return this.post(this.endpoint, request);
+        return super.post(this.endpoint, request);
     }
 
     /**
@@ -45,7 +42,7 @@ export class RobotConfigService extends BaseService {
         const queryString = params.toString();
         const url = queryString ? `${this.endpoint}?${queryString}` : this.endpoint;
 
-        return this.get(url);
+        return super.get(url);
     }
 
     /**
@@ -54,7 +51,7 @@ export class RobotConfigService extends BaseService {
     async getConfiguration(
         configId: string
     ): Promise<HttpActionResponse> {
-        return this.get(`${this.endpoint}/${configId}`);
+        return super.get(`${this.endpoint}/${configId}`);
     }
 
     /**
@@ -64,7 +61,7 @@ export class RobotConfigService extends BaseService {
         configId: string,
         request: CreateRobotConfigRequest
     ): Promise<HttpActionResponse> {
-        return this.put(`${this.endpoint}/${configId}`, request);
+        return super.put(`${this.endpoint}/${configId}`, request);
     }
 
     /**
@@ -74,7 +71,7 @@ export class RobotConfigService extends BaseService {
         configId: string,
         request: UpdateRobotConfigRequest
     ): Promise<HttpActionResponse> {
-        return this.patch(`${this.endpoint}/${configId}`, request);
+        return super.patch(`${this.endpoint}/${configId}`, request);
     }
 
     /**
@@ -83,7 +80,7 @@ export class RobotConfigService extends BaseService {
     async deleteConfiguration(
         configId: string
     ): Promise<HttpActionResponse> {
-        return this.delete(`${this.endpoint}/${configId}`);
+        return super.delete(`${this.endpoint}/${configId}`);
     }
 
     /**
@@ -96,14 +93,14 @@ export class RobotConfigService extends BaseService {
         const formData = new FormData();
         formData.append("file", file);
 
-        return this.post(`${this.endpoint}/${configId}/gltf-model`, formData);
+        return super.post(`${this.endpoint}/${configId}/gltf-model`, formData);
     }
 
     /**
      * Download GLTF model file
      */
     async downloadGltfModel(configId: string): Promise<Blob> {
-        return this.downloadFile(`${this.endpoint}/${configId}/gltf-model`);
+        return super.downloadFile(`${this.endpoint}/${configId}/gltf-model`);
     }
 
     /**
@@ -112,14 +109,14 @@ export class RobotConfigService extends BaseService {
     async getGltfModelMetadata(
         configId: string
     ): Promise<HttpActionResponse> {
-        return this.get(`${this.endpoint}/${configId}/gltf-model/metadata`);
+        return super.get(`${this.endpoint}/${configId}/gltf-model/metadata`);
     }
 
     /**
      * Delete GLTF model file (keeps configuration)
      */
     async deleteGltfModel(configId: string): Promise<HttpActionResponse> {
-        return this.delete(`${this.endpoint}/${configId}/gltf-model`);
+        return super.delete(`${this.endpoint}/${configId}/gltf-model`);
     }
 
     /**
@@ -129,14 +126,14 @@ export class RobotConfigService extends BaseService {
         const formData = new FormData();
         formData.append("file", file);
 
-        return this.post(`${this.endpoint}/components`, formData);
+        return super.post(`${this.endpoint}/components`, formData);
     }
 
     /**
      * Get list of all available components from database
      */
     async getComponentsList(): Promise<HttpActionResponse> {
-        return this.get(`${this.endpoint}/components`);
+        return super.get(`${this.endpoint}/components`);
     }
 }
 

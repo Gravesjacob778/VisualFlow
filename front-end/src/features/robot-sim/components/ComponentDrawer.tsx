@@ -11,6 +11,21 @@ interface Component {
     fileName?: string;
 }
 
+interface ComponentListResponse {
+    items: Array<ComponentItem>;
+}
+
+interface ComponentItem {
+    id: string;
+    fileName: string;
+    fileSize: number;
+    contentType: string;
+    uploadedAt: string;
+    uploadedBy: string;
+    componentType: string;
+    contains: string[];
+    url: string;
+}
 export function ComponentDrawer() {
     const [isOpen, setIsOpen] = useState(true);
     const [components, setComponents] = useState<Component[]>([]);
@@ -27,14 +42,16 @@ export function ComponentDrawer() {
                 setError(null);
                 const response = await robotConfigService.getComponentsList();
 
-                if (response.isSuccess && Array.isArray(response.data)) {
-                    const mappedComponents: Component[] = response.data.map((item: any) => ({
-                        id: item.id || item._id || String(Math.random()),
-                        name: item.name || item.fileName || "Unknown Component",
-                        type: item.type || "Component",
+                if (response.success) {
+                    console.log("Componets List", response.data);
+                    const mappedComponents: Component[] = (response.data as ComponentListResponse).items.map((item: ComponentItem) => ({
+                        id: item.id,
+                        name: item.fileName || "Unknown Component",
+                        type: item.componentType || "Component",
                         fileName: item.fileName,
                     }));
                     setComponents(mappedComponents);
+                    console.log("Componets List", components);
                 } else {
                     console.warn("Failed to fetch components:", response.message);
                 }
@@ -70,17 +87,19 @@ export function ComponentDrawer() {
         try {
             const response = await robotConfigService.uploadComponent(file);
 
-            if (!response.isSuccess) {
+            if (!response.success) {
                 throw new Error(response.message || "上傳失敗");
             }
-
-            const newComponent: Component = {
-                id: response.data?.id || Date.now().toString(),
-                name: response.data?.fileName || file.name,
-                type: "Uploaded ZIP",
-            };
-
-            setComponents((prev) => [newComponent, ...prev]);
+            // 使用類型斷言來指定 response.data 的結構
+            const uploadedData = response.data as { items: any[] };
+            const newComponents: Component[] = uploadedData.items.map((item: any) => ({
+                id: item.id || item._id || String(Math.random()),
+                name: item.name || item.fileName || "Unknown Component",
+                type: item.type || "Component",
+                fileName: item.fileName,
+            }));
+            setComponents((prev) => [...newComponents, ...prev]);
+            console.log("Componets List", components);
         } catch (err) {
             console.error("Upload component failed", err);
             setError(err instanceof Error ? err.message : "上傳發生錯誤");

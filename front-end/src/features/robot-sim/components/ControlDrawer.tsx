@@ -135,7 +135,7 @@ export function ControlDrawer() {
 
       const response = await robotConfigService.createConfiguration(request);
 
-      if (response.isSuccess) {
+      if (response.success) {
         alert("✅ Configuration saved successfully!");
       } else {
         alert(`❌ Failed to save: ${response.message}`);

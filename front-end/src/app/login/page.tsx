@@ -27,7 +27,8 @@ export default function LoginPage() {
             const authService = new AuthService();
             const response = await authService.login(email, password);
 
-            if (response.isSuccess) {
+            if (response.success) {
+                console.log(response);
                 setAuthenticated(true);
                 // Navigate to home page or dashboard after successful login
                 router.push("/");

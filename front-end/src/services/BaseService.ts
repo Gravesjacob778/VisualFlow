@@ -1,116 +1,155 @@
-import { buildUrl, parseJson } from "@/services/httpClient";
-import type { HttpActionResponse } from "@/services/httpActionResponse";
-
+import { HttpActionResponse } from "../services/httpActionResponse";
+import { HttpClient } from "../lib/httpClient";
+const getBaseUrl = () => {
+    if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+        // Use NEXT_PUBLIC_ prefix for client-side environment variables in Next.js
+        return process.env.NEXT_PUBLIC_API_BASE_URL;
+    }
+    return 'http://localhost:5195';
+};
 export class BaseService {
-    protected baseURL: string;
+    private http: HttpClient = new HttpClient();
 
     constructor() {
-        this.baseURL =
-            process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5195/api";
-    }
+        // 響應攔截器：處理 401 未授權錯誤
+        this.http.useResponse(async (response, request) => {
+            if (response.status === 401) {
+                // 檢查是否為登入 API，登入 API 的 401 不需要重導向
+                const url = typeof request === 'string' ? request : request.url
+                const isLoginRequest = url.includes('/Auth/Login')
 
-    protected async handleResponse(
-        response: Response,
-        endpoint: string
-    ): Promise<HttpActionResponse> {
+                if (!isLoginRequest) {
 
-        const data = await parseJson(response);
-
-        return {
-            isSuccess: response.ok,
-            statusCode: response.status,
-            message:
-                (data as { message?: string } | null)?.message || response.statusText,
-            data,
-        };
-    }
-
-    protected async get(endpoint: string): Promise<HttpActionResponse> {
-        const response = await fetch(buildUrl(this.baseURL, endpoint), {
-            method: "GET",
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-            },
+                    if (typeof window !== 'undefined') {
+                        window.location.href = '/login'
+                    }
+                }
+            }
+            return response;
         });
-
-        return this.handleResponse(response, endpoint);
+    }
+    async get(
+        url: string,
+        params?: Record<string, string | number | unknown>,
+        init: RequestInit = {}
+    ): Promise<HttpActionResponse> {
+        let query = "";
+        if (params) {
+            // 將參數轉換為字串格式
+            const searchParams = new URLSearchParams();
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    searchParams.append(key, String(value));
+                }
+            });
+            const queryString = searchParams.toString();
+            query = queryString ? `?${queryString}` : "";
+        }
+        const response = await this.http.request(getBaseUrl() + url + query, {
+            ...init,
+            credentials: "include", // ✅ 允許帶 Cookie
+            method: "GET",
+        });
+        return await response.json();
     }
 
-    protected async post(
-        endpoint: string,
-        body?: unknown
+    async post(
+        url: string,
+        body?: unknown,
+        init: RequestInit = {}
     ): Promise<HttpActionResponse> {
         const isFormData = body instanceof FormData;
 
-        const response = await fetch(buildUrl(this.baseURL, endpoint), {
+        const headers = isFormData
+            ? { ...(init.headers || {}) }
+            : { "Content-Type": "application/json", ...(init.headers || {}) };
+
+        const processedBody = isFormData
+            ? body // 直接使用 FormData
+            : (body !== undefined ? JSON.stringify(body) : undefined);
+
+        const response = await this.http.request(getBaseUrl() + url, {
+            ...init,
             method: "POST",
             credentials: "include",
-            headers: isFormData
-                ? {}
-                : {
-                    "Content-Type": "application/json",
-                },
-            body: isFormData ? body : JSON.stringify(body),
+            headers,
+            body: processedBody,
         });
-
-        return this.handleResponse(response, endpoint);
+        console.log(response);
+        return await response.json();
     }
 
-    protected async put(
-        endpoint: string,
-        body?: unknown
+    async put(
+        url: string,
+        body?: any,
+        init: RequestInit = {}
     ): Promise<HttpActionResponse> {
-        const response = await fetch(buildUrl(this.baseURL, endpoint), {
+        const response = await this.http.request(getBaseUrl() + url, {
+            ...init,
             method: "PUT",
             credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(body),
+            headers: { "Content-Type": "application/json", ...(init.headers || {}) },
+            body: body !== undefined ? JSON.stringify(body) : undefined,
         });
-
-        return this.handleResponse(response, endpoint);
+        return await response.json();
     }
 
-    protected async patch(
-        endpoint: string,
-        body?: unknown
+    async patch(
+        url: string,
+        body?: any,
+        init: RequestInit = {}
     ): Promise<HttpActionResponse> {
-        const response = await fetch(buildUrl(this.baseURL, endpoint), {
+        const response = await this.http.request(getBaseUrl() + url, {
+            ...init,
             method: "PATCH",
             credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(body),
+            headers: { "Content-Type": "application/json", ...(init.headers || {}) },
+            body: body !== undefined ? JSON.stringify(body) : undefined,
         });
-
-        return this.handleResponse(response, endpoint);
+        return await response.json();
     }
 
-    protected async delete(endpoint: string): Promise<HttpActionResponse> {
-        const response = await fetch(buildUrl(this.baseURL, endpoint), {
+    async delete(url: string, init: RequestInit = {}): Promise<HttpActionResponse> {
+        const response = await this.http.request(getBaseUrl() + url, {
+            ...init,
             method: "DELETE",
             credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-            },
         });
-
-        return this.handleResponse(response, endpoint);
+        return await response.json();
     }
 
-    protected async downloadFile(endpoint: string): Promise<Blob> {
-        const response = await fetch(buildUrl(this.baseURL, endpoint), {
-            method: "GET",
+    /**
+     * 下載文件（返回 Blob 和文件名）
+     */
+    async downloadFile(
+        url: string,
+        params?: Record<string, string | number | unknown>,
+        init: RequestInit = {}
+    ): Promise<Blob> {
+        let query = "";
+        if (params) {
+            const searchParams = new URLSearchParams();
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    searchParams.append(key, String(value));
+                }
+            });
+            const queryString = searchParams.toString();
+            query = queryString ? `?${queryString}` : "";
+        }
+
+        const response = await this.http.request(getBaseUrl() + url + query, {
+            ...init,
             credentials: "include",
+            method: "GET",
         });
 
         if (!response.ok) {
-            throw new Error(`Download failed: ${response.statusText}`);
+            throw new Error(`文件下載失敗: ${response.status} ${response.statusText}`);
         }
 
-        return await response.blob();
+
+        const blob = await response.blob();
+        return blob;
     }
 }
