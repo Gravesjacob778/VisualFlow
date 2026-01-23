@@ -1,5 +1,5 @@
 /**
- * 整合範例：ComponentDrawer + 動態模型載入
+ * 整合範例:ComponentDrawer + 動態模型載入
  * 
  * 這個範例展示如何將 ComponentDrawer 整合到頁面中，
  * 並在點擊元件時動態載入對應的 3D 模型
@@ -13,7 +13,6 @@ import { OrbitControls, Environment, Grid } from '@react-three/drei';
 import { ComponentDrawer } from '@/features/robot-sim/components/ComponentDrawer';
 import { ControlDrawer } from '@/features/robot-sim/components/ControlDrawer';
 import { DynamicRobotArm } from '@/features/robot-sim/components/DynamicRobotArm';
-import { useModel } from '@/hooks/useModel';
 
 interface Component {
     id: string;
@@ -137,65 +136,18 @@ function DynamicModelLoader({ componentId }: { componentId: string }) {
     // 方案 3: 使用命名規則（例如 component-001 -> model-001）
 
     // 目前先使用簡單的映射（實際上應該從 API 取得）
-    const modelId = `model-${componentId}`;
+    const modelId = componentId;
 
-    const { loading, error, model, progress } = useModel(modelId);
+    console.log('🎬 DynamicModelLoader 渲染:', { componentId, modelId });
 
-    // 載入中
-    if (loading) {
-        return (
-            <group>
-                <mesh>
-                    <boxGeometry args={[1, 1, 1]} />
-                    <meshStandardMaterial
-                        color="#3b82f6"
-                        wireframe
-                        opacity={0.5}
-                        transparent
-                    />
-                </mesh>
-
-                {/* 顯示載入進度（使用 HTML overlay 或 3D 文字） */}
-                {progress && (
-                    <FloatingText
-                        text={`${progress.message}\n${progress.progress || 0}%`}
-                        position={[0, 2, 0]}
-                    />
-                )}
-            </group>
-        );
-    }
-
-    // 錯誤
-    if (error) {
-        return (
-            <group>
-                <mesh>
-                    <boxGeometry args={[1, 1, 1]} />
-                    <meshStandardMaterial color="#ef4444" />
-                </mesh>
-                <FloatingText
-                    text={`載入失敗\n${error.message}`}
-                    position={[0, 2, 0]}
-                    color="#ef4444"
-                />
-            </group>
-        );
-    }
-
-    // 成功載入模型
-    if (model) {
-        return (
-            <DynamicRobotArm
-                modelId={modelId}
-                position={[0, 0, 0]}
-                scale={0.15}
-                autoRotate={false}
-            />
-        );
-    }
-
-    return null;
+    return (
+        <DynamicRobotArm
+            modelId={modelId}
+            position={[0, 0, 0]}
+            scale={0.15}
+            autoRotate={false}
+        />
+    );
 }
 
 /**

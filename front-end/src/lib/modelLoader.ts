@@ -113,15 +113,29 @@ export async function loadGLTFModel(
                 validateGLTFJson(cached.gltf);
             } catch (validationError) {
                 console.warn('快取的 GLTF 驗證失敗，將重新下載:', validationError);
-                // 繼續執行下載流程
+                // 刪除無效的快取並繼續下載
+                await modelDB.deleteModel(modelId);
             }
 
             if (cached.gltf && cached.gltf.asset && cached.gltf.asset.version) {
                 // 直接解析 GLTF JSON（不需要透過 URL 載入）
                 onProgress?.({ phase: 'processing', message: '正在解析模型...', progress: 50 });
+                console.log('📦 使用快取的 GLTF:', {
+                    modelId,
+                    version: cached.version,
+                    hasGltf: !!cached.gltf,
+                    hasResources: Object.keys(cached.resources).length
+                });
+
                 const parsedGltf = await parseGLTFFromJson(cached.gltf, cached.resources);
-                console.log('GLTF JSON Converted:', parsedGltf);
+
+                console.log('✅ 快取模型解析完成:', {
+                    hasScene: !!parsedGltf.scene,
+                    sceneChildren: parsedGltf.scene?.children.length || 0
+                });
+
                 onProgress?.({ phase: 'complete', message: '模型載入完成（來自快取）', progress: 100 });
+
                 return {
                     format: 'gltf',
                     url: '', // GLTF 格式不再需要 URL，直接使用 scene
@@ -191,13 +205,27 @@ export async function loadGLTFModel(
 
         // 7. 儲存到 IndexedDB
         onProgress?.({ phase: 'processing', message: '正在儲存到快取...', progress: 85 });
+        console.log('Resources downloaded for GLTF:', Object.keys(resources));
         await modelDB.saveGLTFModel(modelId, modelVersion, modelName, gltfJson, resources);
 
         // 8. 直接解析 GLTF JSON（不需要透過 URL 載入）
         onProgress?.({ phase: 'processing', message: '正在解析模型...', progress: 95 });
+        console.log('📦 準備解析新下載的 GLTF:', {
+            modelId,
+            hasGltf: !!gltfJson,
+            hasResources: Object.keys(resources).length
+        });
+
         const parsedGltf = await parseGLTFFromJson(gltfJson, resources);
 
+        console.log('✅ 新模型解析完成:', {
+            hasScene: !!parsedGltf.scene,
+            sceneChildren: parsedGltf.scene?.children.length || 0,
+            scenes: parsedGltf.scenes.length
+        });
+
         onProgress?.({ phase: 'complete', message: '模型載入完成', progress: 100 });
+
         return {
             format: 'gltf',
             url: '', // GLTF 格式不再需要 URL，直接使用 scene
@@ -280,7 +308,7 @@ function validateGLTFJson(gltfJson: any): void {
 
 /**
  * 直接從 GLTF JSON 和資源解析 GLTF 物件
- * 使用 GLTFLoader.parse() 方法，避免額外的 URL 載入
+ * 使用 GLTFLoader.load() 方法載入 GLTF JSON + 資源
  */
 export async function parseGLTFFromJson(
     gltfJson: any,
@@ -289,8 +317,10 @@ export async function parseGLTFFromJson(
     // 驗證 GLTF JSON
     validateGLTFJson(gltfJson);
 
+    // 深拷貝 GLTF JSON 避免修改原始數據
+    const processedGltf = JSON.parse(JSON.stringify(gltfJson));
+
     // 確保 GLTF 有正確的 asset 資訊
-    const processedGltf = { ...gltfJson };
     if (!processedGltf.asset) {
         processedGltf.asset = {
             version: '2.0',
@@ -300,49 +330,75 @@ export async function parseGLTFFromJson(
         processedGltf.asset.version = '2.0';
     }
 
-    // 建立資源映射（filename -> ArrayBuffer）
-    const resourceBuffers: Record<string, ArrayBuffer> = {};
-    await Promise.all(
-        Object.entries(resources).map(async ([filename, blob]) => {
-            resourceBuffers[filename] = await blob.arrayBuffer();
-        })
-    );
-
-    // 建立自定義的資源載入管理器
-    const manager = new THREE.LoadingManager();
-    const loader = new GLTFLoader(manager);
-
-    // 設置 URL 修改器，將資源 URI 轉換為 data URL
-    manager.setURLModifier((url: string) => {
-        const filename = url.split('/').pop() || url;
-
-        // 檢查是否是 buffer 資源
-        if (resourceBuffers[filename]) {
-            const blob = resources[filename];
-            return URL.createObjectURL(blob);
-        }
-
-        return url;
+    // 建立資源 Blob URLs
+    const resourceUrls: Record<string, string> = {};
+    Object.entries(resources).forEach(([filename, blob]) => {
+        resourceUrls[filename] = URL.createObjectURL(blob);
     });
 
-    // 將 GLTF JSON 轉換為 ArrayBuffer
-    const gltfString = JSON.stringify(processedGltf);
-    const encoder = new TextEncoder();
-    const gltfArrayBuffer = encoder.encode(gltfString).buffer;
+    // 更新 GLTF JSON 中的 buffers URI 指向 Blob URLs
+    if (processedGltf.buffers) {
+        processedGltf.buffers.forEach((buffer: any) => {
+            if (buffer.uri) {
+                const filename = buffer.uri.split('/').pop() || buffer.uri;
+                if (resourceUrls[filename]) {
+                    buffer.uri = resourceUrls[filename];
+                }
+            }
+        });
+    }
+
+    // 更新 GLTF JSON 中的 images URI 指向 Blob URLs
+    if (processedGltf.images) {
+        processedGltf.images.forEach((image: any) => {
+            if (image.uri) {
+                const filename = image.uri.split('/').pop() || image.uri;
+                if (resourceUrls[filename]) {
+                    image.uri = resourceUrls[filename];
+                }
+            }
+        });
+    }
+
+    // 創建 GLTF JSON 的 Blob URL
+    const gltfBlob = new Blob([JSON.stringify(processedGltf)], { type: 'model/gltf+json' });
+    const gltfUrl = URL.createObjectURL(gltfBlob);
+
+    console.log('GLTF Blob URL created:', gltfUrl);
+    // 使用 GLTFLoader 載入（使用 load 而不是 parse，因為 parse 是給 GLB 用的）
+    const loader = new GLTFLoader();
 
     return new Promise<GLTF>((resolve, reject) => {
-        loader.parse(
-            gltfArrayBuffer,
-            '', // 基礎路徑（用於解析相對路徑的資源）
+        loader.load(
+            gltfUrl,
             (gltf) => {
-                console.log('✅ GLTF JSON 直接解析成功:', {
+                // 清理 Blob URLs
+                URL.revokeObjectURL(gltfUrl);
+                Object.values(resourceUrls).forEach(url => URL.revokeObjectURL(url));
+
+                console.log('✅ GLTF JSON 解析成功:', {
                     scenes: gltf.scenes.length,
                     animations: gltf.animations.length,
                     cameras: gltf.cameras.length,
+                    hasScene: !!gltf.scene,
+                    sceneChildren: gltf.scene?.children.length || 0
                 });
+
+                // 確保場景存在
+                if (!gltf.scene) {
+                    console.error('❌ GLTF 解析成功但沒有場景！');
+                    reject(new Error('GLTF 解析成功但沒有場景'));
+                    return;
+                }
+
                 resolve(gltf);
             },
+            undefined, // onProgress
             (error) => {
+                // 清理 Blob URLs
+                URL.revokeObjectURL(gltfUrl);
+                Object.values(resourceUrls).forEach(url => URL.revokeObjectURL(url));
+
                 console.error('❌ GLTF JSON 解析失敗:', error);
                 reject(error);
             }
