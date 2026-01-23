@@ -16,26 +16,21 @@ import {
   useRobotArmStore,
   degreesToRadians,
   radiansToDegrees,
-  jointConstraints,
-  type JointAngles,
-  type BoneControl,
 } from "@/stores/robotArmStore";
 import { robotConfigService } from "@/services";
-import type { CreateRobotConfigRequest } from "@/types";
+import type { CreateRobotConfigRequest, JointControl } from "@/types";
 
-interface ControlConfig {
-  id: keyof JointAngles | "gripper" | "claw";
+// 特殊控制項（gripper 和 claw）的配置
+interface SpecialControlConfig {
+  id: "gripper" | "claw";
   name: string;
   minDeg: number;
   maxDeg: number;
 }
 
-const controlConfigs: ControlConfig[] = [
-  { id: "j2", name: "Shoulder", minDeg: -90, maxDeg: 90 },
-  { id: "j3", name: "Elbow", minDeg: -97, maxDeg: 90 },
-  { id: "j4", name: "Wrist Roll", minDeg: -122, maxDeg: 125 },
-  { id: "j5", name: "Wrist Pitch", minDeg: -98, maxDeg: 108 },
+const specialControls: SpecialControlConfig[] = [
   { id: "gripper", name: "Gripper (自轉)", minDeg: -360, maxDeg: 360 },
+  { id: "claw", name: "Claw (夾爪)", minDeg: 0, maxDeg: 100 },
 ];
 
 export function ControlDrawer() {
@@ -47,42 +42,50 @@ export function ControlDrawer() {
   const clawValue = useRobotArmStore((state) => state.clawValue);
   const isManualMode = useRobotArmStore((state) => state.isManualMode);
   const boneControls = useRobotArmStore((state) => state.boneControls);
-  const setJointAngle = useRobotArmStore((state) => state.setJointAngle);
   const setGripperValue = useRobotArmStore((state) => state.setGripperValue);
   const setClawValue = useRobotArmStore((state) => state.setClawValue);
   const setBoneControlValue = useRobotArmStore((state) => state.setBoneControlValue);
   const setManualMode = useRobotArmStore((state) => state.setManualMode);
   const resetAll = useRobotArmStore((state) => state.resetAll);
 
+  // 動態控制項
+  const modelControls = useRobotArmStore((state) => state.modelControls);
+  const dynamicJointAngles = useRobotArmStore((state) => state.dynamicJointAngles);
+  const setDynamicJointAngle = useRobotArmStore((state) => state.setDynamicJointAngle);
+
   // Local drawer state
   const [isOpen, setIsOpen] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
 
-  const getControlValue = (config: ControlConfig): number => {
+  // 取得特殊控制項的值
+  const getSpecialControlValue = (config: SpecialControlConfig): number => {
     if (config.id === "gripper") {
       return gripperValue;
     }
-    if (config.id === "claw") {
-      return clawValue;
-    }
-    return Math.round(radiansToDegrees(jointAngles[config.id as keyof JointAngles]));
+    return clawValue;
   };
 
-  const handleControlChange = (config: ControlConfig, valueDeg: number) => {
+  // 處理特殊控制項變更
+  const handleSpecialControlChange = (config: SpecialControlConfig, valueDeg: number) => {
     if (config.id === "gripper") {
       setGripperValue(valueDeg);
-    } else if (config.id === "claw") {
-      setClawValue(valueDeg);
     } else {
-      // Clamp to valid range based on constraints
-      const constraint = jointConstraints[config.id as keyof typeof jointConstraints];
-      const angleRad = degreesToRadians(valueDeg);
-      const clampedRad = Math.max(
-        constraint.min,
-        Math.min(constraint.max, angleRad)
-      );
-      setJointAngle(config.id as keyof JointAngles, clampedRad);
+      setClawValue(valueDeg);
     }
+  };
+
+  // 取得動態控制項的值（度數）
+  const getDynamicControlValue = (control: JointControl): number => {
+    const angleRad = dynamicJointAngles[control.id] ?? 0;
+    return Math.round(radiansToDegrees(angleRad));
+  };
+
+  // 處理動態控制項變更
+  const handleDynamicControlChange = (control: JointControl, valueDeg: number) => {
+    // 根據控制項的單位進行轉換
+    const clampedDeg = Math.max(control.minAngle, Math.min(control.maxAngle, valueDeg));
+    const angleRad = degreesToRadians(clampedDeg);
+    setDynamicJointAngle(control.id, angleRad);
   };
 
   const handleRun = () => {
@@ -213,47 +216,93 @@ export function ControlDrawer() {
           {/* 控制項列表 */}
           <div className="flex-1 overflow-y-auto p-4">
             <div className="space-y-4">
-              {/* 預設控制項 */}
-              {controlConfigs.map((config) => {
-                const value = getControlValue(config);
-                const isGripper = config.id === "gripper";
-                const isClaw = config.id === "claw";
-                return (
-                  <div key={config.id} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium">
-                        {config.name}
-                      </label>
-                      <span className="text-xs text-white/60 tabular-nums">
-                        {value}
-                        {isGripper || isClaw ? "%" : "°"}
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={config.minDeg}
-                      max={config.maxDeg}
-                      value={value}
-                      onChange={(e) =>
-                        handleControlChange(config, Number(e.target.value))
-                      }
-                      disabled={!isManualMode}
-                      className={`w-full accent-blue-600 ${!isManualMode ? "cursor-not-allowed opacity-50" : ""
-                        }`}
-                    />
-                    <div className="flex justify-between text-xs text-white/40">
-                      <span>
-                        {config.minDeg}
-                        {isGripper || isClaw ? "%" : "°"}
-                      </span>
-                      <span>
-                        {config.maxDeg}
-                        {isGripper || isClaw ? "%" : "°"}
-                      </span>
-                    </div>
+              {/* 動態模型控制項 */}
+              {modelControls.length > 0 ? (
+                <>
+                  <div className="mb-2">
+                    <h3 className="text-xs font-semibold text-white/70">
+                      MODEL CONTROLS ({modelControls.length})
+                    </h3>
                   </div>
-                );
-              })}
+                  {modelControls.map((control) => {
+                    const value = getDynamicControlValue(control);
+                    return (
+                      <div key={control.id} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-medium">
+                            {control.displayName}
+                          </label>
+                          <span className="text-xs text-white/60 tabular-nums">
+                            {value}°
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min={control.minAngle}
+                          max={control.maxAngle}
+                          value={value}
+                          onChange={(e) =>
+                            handleDynamicControlChange(control, Number(e.target.value))
+                          }
+                          disabled={!isManualMode}
+                          className={`w-full accent-blue-600 ${!isManualMode ? "cursor-not-allowed opacity-50" : ""
+                            }`}
+                        />
+                        <div className="flex justify-between text-xs text-white/40">
+                          <span>{control.minAngle}°</span>
+                          <span>{control.maxAngle}°</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              ) : (
+                <div className="text-center py-4 text-white/40 text-sm">
+                  載入模型以顯示控制項
+                </div>
+              )}
+
+              {/* 特殊控制項 (Gripper & Claw) */}
+              {modelControls.length > 0 && (
+                <>
+                  <div className="border-t border-white/20 pt-4">
+                    <h3 className="text-xs font-semibold text-white/70 mb-3">
+                      SPECIAL CONTROLS
+                    </h3>
+                  </div>
+                  {specialControls.map((config) => {
+                    const value = getSpecialControlValue(config);
+                    return (
+                      <div key={config.id} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-medium">
+                            {config.name}
+                          </label>
+                          <span className="text-xs text-white/60 tabular-nums">
+                            {value}{config.id === "claw" ? "%" : "°"}
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min={config.minDeg}
+                          max={config.maxDeg}
+                          value={value}
+                          onChange={(e) =>
+                            handleSpecialControlChange(config, Number(e.target.value))
+                          }
+                          disabled={!isManualMode}
+                          className={`w-full accent-green-600 ${!isManualMode ? "cursor-not-allowed opacity-50" : ""
+                            }`}
+                        />
+                        <div className="flex justify-between text-xs text-white/40">
+                          <span>{config.minDeg}{config.id === "claw" ? "%" : "°"}</span>
+                          <span>{config.maxDeg}{config.id === "claw" ? "%" : "°"}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
 
               {/* 動態骨骼控制項 */}
               {boneControls.size > 0 && (

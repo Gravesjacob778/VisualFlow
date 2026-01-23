@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import type { JointControl } from "@/types/model";
 
 export interface JointAngles {
   j1: number; // Base rotation (Y axis), -PI to PI
@@ -26,6 +27,10 @@ export interface RobotArmState {
   isManualMode: boolean;
   boneControls: Map<string, BoneControl>; // 動態骨骼控制
 
+  // 動態模型控制項
+  modelControls: JointControl[];           // 模型的控制項配置
+  dynamicJointAngles: Record<string, number>; // 動態關節角度 (弧度)
+
   // Actions
   setJointAngle: (joint: keyof JointAngles, angle: number) => void;
   setAllJointAngles: (angles: JointAngles) => void;
@@ -35,6 +40,12 @@ export interface RobotArmState {
   setBoneControls: (controls: Map<string, BoneControl>) => void;
   setManualMode: (isManual: boolean) => void;
   resetAll: () => void;
+
+  // 動態控制項 Actions
+  setModelControls: (controls: JointControl[]) => void;
+  clearModelControls: () => void;
+  setDynamicJointAngle: (controlId: string, angleRadians: number) => void;
+  resetDynamicJointAngles: () => void;
 }
 
 const initialJointAngles: JointAngles = {
@@ -55,6 +66,8 @@ export const useRobotArmStore = create<RobotArmState>()(
       clawValue: 0,
       isManualMode: true, // Start in manual mode
       boneControls: new Map(),
+      modelControls: [],
+      dynamicJointAngles: {},
 
       // Actions
       setJointAngle: (joint, angle) =>
@@ -93,11 +106,70 @@ export const useRobotArmStore = create<RobotArmState>()(
       setManualMode: (isManual) => set({ isManualMode: isManual }),
 
       resetAll: () =>
+        set((state) => {
+          // 重置動態關節角度為預設值
+          const resetDynamicAngles: Record<string, number> = {};
+          state.modelControls.forEach((control) => {
+            const defaultAngleRad =
+              control.unit === "degree"
+                ? degreesToRadians(control.defaultAngle)
+                : control.defaultAngle;
+            resetDynamicAngles[control.id] = defaultAngleRad;
+          });
+
+          return {
+            jointAngles: { ...initialJointAngles },
+            gripperValue: 0,
+            clawValue: 0,
+            boneControls: new Map(),
+            dynamicJointAngles: resetDynamicAngles,
+          };
+        }),
+
+      // 動態控制項 Actions
+      setModelControls: (controls) =>
+        set(() => {
+          // 用 defaultAngle 初始化 dynamicJointAngles
+          const initialAngles: Record<string, number> = {};
+          controls.forEach((control) => {
+            const defaultAngleRad =
+              control.unit === "degree"
+                ? degreesToRadians(control.defaultAngle)
+                : control.defaultAngle;
+            initialAngles[control.id] = defaultAngleRad;
+          });
+
+          return {
+            modelControls: controls,
+            dynamicJointAngles: initialAngles,
+          };
+        }),
+
+      clearModelControls: () =>
         set({
-          jointAngles: { ...initialJointAngles },
-          gripperValue: 0,
-          clawValue: 0,
-          boneControls: new Map(),
+          modelControls: [],
+          dynamicJointAngles: {},
+        }),
+
+      setDynamicJointAngle: (controlId, angleRadians) =>
+        set((state) => ({
+          dynamicJointAngles: {
+            ...state.dynamicJointAngles,
+            [controlId]: angleRadians,
+          },
+        })),
+
+      resetDynamicJointAngles: () =>
+        set((state) => {
+          const resetAngles: Record<string, number> = {};
+          state.modelControls.forEach((control) => {
+            const defaultAngleRad =
+              control.unit === "degree"
+                ? degreesToRadians(control.defaultAngle)
+                : control.defaultAngle;
+            resetAngles[control.id] = defaultAngleRad;
+          });
+          return { dynamicJointAngles: resetAngles };
         }),
     }),
     { name: "robot-arm-store" }
